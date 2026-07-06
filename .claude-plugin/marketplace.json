@@ -1,0 +1,19 @@
+{
+  "name": "gmc",
+  "owner": {
+    "name": "Witchpot Studio",
+    "url": "https://gamemarketcopilot.com"
+  },
+  "metadata": {
+    "description": "Official Game Market Copilot plugins: remote MCP connection bundled with the gmc-analysis skill.",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "gmc",
+      "source": "./",
+      "description": "Game Market Copilot MCP connection + gmc-analysis skill (Steam market analysis workflows and branded chart cards).",
+      "category": "data-analysis"
+    }
+  ]
+}
