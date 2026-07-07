@@ -10,4 +10,13 @@ Public distribution repo for Game Market Copilot agent skills.
 - This repo is public. Only distribution content belongs here: skill docs,
   plugin/marketplace manifests, the remote MCP client config, and the sync
   script. No product code, no collection internals, no secrets, no tokens.
+- The repo doubles as a plugin for BOTH Claude Code and Codex:
+  `.claude-plugin/{plugin,marketplace}.json` (Claude Code),
+  `.codex-plugin/plugin.json` + `.agents/plugins/marketplace.json` (Codex).
+  Both point at the same `skills/` and `.mcp.json` — keep name/version in
+  the manifests aligned with the skill's frontmatter version when syncing.
+- Codex installs resolve from the GitHub default branch (the native
+  marketplace manifest uses the repo's git URL). To QA changes before they
+  land on main, push a branch and use
+  `codex plugin marketplace add witchpot-studio/gmc-agent-skills --ref <branch>`.
 - Keep everything in English.

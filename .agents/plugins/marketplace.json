@@ -1,0 +1,20 @@
+{
+  "name": "gmc",
+  "interface": {
+    "displayName": "Game Market Copilot"
+  },
+  "plugins": [
+    {
+      "name": "gmc",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/witchpot-studio/gmc-agent-skills.git"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

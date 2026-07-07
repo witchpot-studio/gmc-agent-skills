@@ -1,0 +1,43 @@
+{
+  "name": "gmc",
+  "version": "0.3.0",
+  "description": "Steam market analytics from Game Market Copilot: MCP tools plus the gmc-analysis skill for cohort analysis, market sizing, and branded chart cards.",
+  "author": {
+    "name": "Witchpot Studio",
+    "email": "contact@witchpot.com",
+    "url": "https://gamemarketcopilot.com"
+  },
+  "homepage": "https://gamemarketcopilot.com",
+  "repository": "https://github.com/witchpot-studio/gmc-agent-skills",
+  "keywords": [
+    "steam",
+    "market-analytics",
+    "games",
+    "market-research",
+    "reviews",
+    "mcp",
+    "analysis"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Game Market Copilot",
+    "shortDescription": "Steam market analytics: observed data, cohort analysis, chart cards",
+    "longDescription": "Query Game Market Copilot's Steam market database from Codex: size cohorts with population-true aggregates, check research coverage before fan-outs, pull per-title profiles and review evidence, and turn results into publish-ready branded chart cards. Data is observed on a regular collection schedule, not estimated. Requires a paid GMC plan (Starter or Pro).",
+    "developerName": "Witchpot Studio",
+    "category": "Productivity",
+    "capabilities": [
+      "Read"
+    ],
+    "websiteURL": "https://gamemarketcopilot.com",
+    "privacyPolicyURL": "https://gamemarketcopilot.com/legal/privacy",
+    "termsOfServiceURL": "https://gamemarketcopilot.com/legal/terms",
+    "defaultPrompt": [
+      "How many Steam titles released in 2025 sit in the $10-15 price band?",
+      "Compare roguelike releases by review-count bucket over the last two years",
+      "Make a branded chart card of release counts by price band for 2025"
+    ],
+    "brandColor": "#EC7336",
+    "logo": "./assets/logo.svg"
+  }
+}

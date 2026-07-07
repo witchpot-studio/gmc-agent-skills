@@ -48,21 +48,23 @@ The plugin bundles the remote MCP server configuration and the skill
 together. On first use, authenticate with your GMC account when prompted
 (or configure your API key per the connect page).
 
-### OpenAI Codex
-
-The plugin/`.mcp.json` above is Claude Code-specific; on Codex, install
-the skill and add the MCP server separately:
+### OpenAI Codex plugin (MCP connection + skill in one step)
 
 ```bash
-npx skills add witchpot-studio/gmc-agent-skills --agent codex
-codex mcp add gmc --url https://gamemarketcopilot.com/api/mcp/mcp
+codex plugin marketplace add witchpot-studio/gmc-agent-skills
+codex plugin add gmc@gmc
 codex mcp login gmc     # OAuth sign-in with your GMC account
 ```
 
-The skill lands in `.agents/skills/`, which Codex reads natively. If you
-prefer an API key over OAuth, create one in the GMC settings and use
-`codex mcp add gmc --url ... --bearer-token-env-var GMC_API_KEY` instead
-of `codex mcp login`.
+The plugin registers the remote MCP server and the skill together.
+
+Prefer separate pieces? Install just the skill with
+`npx skills add witchpot-studio/gmc-agent-skills --agent codex` (lands in
+`.agents/skills/`, which Codex reads natively), and just the MCP server
+with `codex mcp add gmc --url https://gamemarketcopilot.com/api/mcp/mcp`
+followed by `codex mcp login gmc` — or use
+`--bearer-token-env-var GMC_API_KEY` with an API key from the GMC
+settings instead of OAuth.
 
 ### Manual
 
