@@ -17,6 +17,9 @@
 - quota.md: corrected to the monthly credit model (Starter 5,000 / Pro
   25,000 credits per month, reset on the 1st at 00:00 UTC, gate-time
   charging) — the per-UTC-day request caps it described were outdated.
+- Documented the paid-plan requirement (Starter/Pro) for authenticated
+  access, and the `PLAN_REQUIRED` vs `QUOTA_EXCEEDED` distinction for
+  MCP tool errors (upgrade vs wait-for-reset).
 
 ## 0.2.0 - 2026-06-12
 

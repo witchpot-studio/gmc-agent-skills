@@ -20,6 +20,12 @@ knowledge layer on top of that connection:
   (endpoint: `https://gamemarketcopilot.com/api/mcp/mcp`)
 - **CLI**: `npm install -g @witchpot/gmc`
 
+**A paid GMC plan (Starter or Pro) is required** for API, CLI, and MCP
+access — Free workspaces cannot connect. See
+https://gamemarketcopilot.com/plans. The skill itself installs fine
+without an account; it just has nothing to talk to until the connection
+exists.
+
 ## Install the skill
 
 ### Any Agent Skills-compatible agent (Claude Code, Codex, Cursor, ...)

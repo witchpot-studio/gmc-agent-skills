@@ -27,6 +27,10 @@ gmc auth status --json        # anonymous => redacted previews + tiny quota
 gmc schema --json             # the authoritative command/endpoint reference
 ```
 
+Authenticated access (CLI login, API keys, MCP) requires a paid GMC plan
+(Starter or Pro); Free workspaces cannot mint credentials. Anonymous CLI
+use works but returns redacted previews with a tiny quota.
+
 Never guess flags: `gmc schema --json` is the source of truth for commands
 and parameters. Endpoint query params are camelCase and the matching CLI
 flag is the kebab-case equivalent (`priceMin` -> `--price-min`,
@@ -57,6 +61,10 @@ applies identically. Mechanics map as follows:
 - CLI-only mechanics (pagination flags, `--fields` projection, map-reduce
   recipes) may have no MCP equivalent — stay within the tool contracts
   instead of simulating them.
+- A `PLAN_REQUIRED` tool error means the workspace plan has no API access
+  (e.g. Free) — retrying or waiting will not help; tell the user an
+  upgrade at gamemarketcopilot.com/plans is required. Only
+  `QUOTA_EXCEEDED` is the wait-for-monthly-reset condition.
 
 References in this skill use CLI syntax; translate to the matching MCP
 tool. Chart-card rules (references/charts.md) apply to both paths
