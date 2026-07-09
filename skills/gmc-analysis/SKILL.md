@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.3.0
+  version: 0.4.0
 ---
 
 # GMC Analysis
@@ -107,6 +107,16 @@ unless you explicitly pass `--include-total`; for count-only questions use
 - **Bounded evidence, not market truth.** Carry the CLI's own caveats:
   evidence packs are sampled/returned-page evidence. Always state
   denominators ("87 of 107 analyzed titles") and preserve `warnings`.
+- **Pass the validity checklist before handing off numbers.** Every
+  reported share carries its denominator, N, observation window, and tag
+  counting basis; small-N groups are labeled directional; group
+  comparisons are stratified for obvious confounds (publisher axis, price,
+  release year) or the unchecked confound is named; scanned-extreme
+  findings disclose the scan. Details in the validity reference.
+- **Claim safety.** No causal verbs for observational associations; label
+  estimates not derived from gmc data as external with a source;
+  `not_collected` means not collected, never zero or absent. Details in
+  the validity reference.
 - **Separate API facts from your synthesis.** Quote theme labels and player
   counts as data; label your clustering and conclusions as your analysis.
 - **Pace your quota.** Read `meta.entitlements.quota` (`used`/`limit`)
@@ -127,6 +137,8 @@ make causal claims. Never emit a GMC-attributed chart that skips these.
 - `references/recipes.md` — step-by-step playbooks (cohort complaints,
   full-cohort map-reduce, single-title deep dive, market sizing).
 - `references/pitfalls.md` — known failure modes and the correct pivots.
+- `references/validity.md` — statistical-validity checklist and
+  claim-safety rules for any published number.
 - `references/quota.md` — quota model and cost estimation.
 - `references/charts.md` — branded chart cards: attribution rules, chart
   type mapping from gmc output shapes, self-contained HTML template.

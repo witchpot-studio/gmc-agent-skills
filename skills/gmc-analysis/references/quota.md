@@ -2,7 +2,7 @@
 
 Quotas are monthly, workspace-level credit allowances enforced for bearer
 credentials (API keys / CLI credentials / MCP tokens). As of 2026-07:
-Starter 5,000 credits/month, Pro 25,000; the counter resets at 00:00 UTC on
+Starter 2,500 credits/month, Pro 7,000; the counter resets at 00:00 UTC on
 the first of each month. Anonymous public preview is far smaller. Credits
 are charged when a request is accepted at the gate, so requests that later
 fail validation or 404 still consume — validate appids before batch

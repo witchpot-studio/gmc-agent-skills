@@ -88,3 +88,37 @@ shorter release window) — then combine the results. Splits are safe: each
 call returns population-true numbers for its slice, so recombined totals stay
 consistent. Note the substitution in your analysis log so reviewers know the
 numbers came from split calls.
+
+## P9. Two tag counting bases exist — never mix them (2026-07)
+
+Tag shares can be computed on two different bases, and the numbers diverge
+sharply (observed in a field comparison: the same cohort's genre shares
+disagreed between two reports because each used a different basis):
+
+- **Single-assignment** — `group_by primary_market_tag` (field
+  `primaryMarketTag`, derived from `tagRanks[0]`). Each game is counted at
+  most once, under its top-ranked tag. Rows are mutually exclusive and sum
+  to the TAGGED subset of the cohort — games without tags are omitted from
+  these rows, so compare the row total against the plain cohort count and
+  use "of tagged titles" as the denominator when the two differ.
+- **Multi-assignment** — `group_by tag`, or separate per-tag filtered
+  counts compared or summed across tags (fields `tags` / `tagRanks` /
+  `facets.marketTags`). Each game is counted under every tag it carries, so
+  one game contributes to many rows and shares sum well past 100%. The
+  server marks `group_by tag` with `summary.methods.groupMembership:
+  "multi"` and a multi-membership caveat. (A single `tags`-filtered count
+  by itself still counts each matching title once — the double-counting
+  appears when per-tag numbers are set side by side.)
+
+Neither basis is wrong — they answer different questions:
+
+- "What is the market composed of?" / "which segment is a game in?" /
+  portfolio-style shares -> single-assignment (`primary_market_tag`).
+- "How many games carry tag X?" / tag reach, co-occurrence, feature
+  adoption -> multi-assignment (`tag` grouping or `tags`-filtered counts).
+
+**Rule**: pick one basis per question, name it next to the denominator
+("single-assignment by primary_market_tag, N=1,204"), and never compare or
+combine numbers across bases — not within a report, and not against an
+earlier report computed on the other basis. If a prior number's basis is
+unknown, recompute it rather than citing it.

@@ -1,5 +1,26 @@
 # gmc-analysis skill changelog
 
+## 0.4.0 - 2026-07-09
+
+- Added `references/validity.md` (NAK-82): statistical-validity checklist
+  (denominator + N on every share, observation window, counting basis,
+  N<30 warning, effect size over bare significance, confound
+  stratification for publisher axis / price / release year, multiple-
+  comparison disclosure) and claim-safety rules (no causal verbs for
+  observational associations, external-estimate labeling, `not_collected`
+  means not collected), with a compliant output example. Wired into the
+  SKILL.md hard rules and the AGENTS.md edition.
+- New pitfall P9 (NAK-81): single-assignment (`primary_market_tag`) vs
+  multi-assignment (`tag` grouping / `tags` filter) tag counting bases
+  diverge sharply — pick one basis per question, name it next to the
+  denominator, never mix or compare across bases.
+
+## 0.3.1 - 2026-07-08
+
+- quota.md: updated the paid allowances to the resized uniform per-credit
+  pricing (Starter 2,500 / Pro 7,000 credits per month, NAK-110); reset and
+  gate-time charging semantics unchanged.
+
 ## 0.3.0 - 2026-07-07
 
 - Added `references/charts.md`: publish-ready branded chart cards from gmc
