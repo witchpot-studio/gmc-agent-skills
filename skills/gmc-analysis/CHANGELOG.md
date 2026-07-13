@@ -1,5 +1,43 @@
 # gmc-analysis skill changelog
 
+## 0.5.0 - 2026-07-13
+
+- New "Saved Game Lists" section in SKILL.md, plus recipe R5 in
+  `references/recipes.md` (NAK-155/NAK-178/NAK-189): documents Game Lists as
+  reusable, workspace-scoped cohort inputs — `gmc lists ...` (CLI) or the 7
+  MCP tools (`list_game_lists`, `get_game_list`, `create_game_list`,
+  `update_game_list`, `add_game_list_items`, `remove_game_list_item`,
+  `delete_game_list`), all 0-credit; passing a filter-kind list's id as
+  `game_list_id`/`--list <id>` to `list_games`, `market_aggregate`,
+  `cohort_review_categories`, or `cohort_evidence` instead of re-sending an
+  inline filter; reading `game_list.definition_hash` to detect a changed
+  stored definition between calls; the composite-list tool restriction
+  (`COMPOSITE_LIST_UNSUPPORTED_FOR_TOOL` on `market_aggregate`/
+  `cohort_review_categories`), the manual-list restriction
+  (`GAME_LIST_KIND_UNSUPPORTED`), and `delete_game_list`'s MCP confirm-by-
+  exact-name two-call contract.
+- `references/charts.md` retroactive documentation (NAK-190): this
+  changelog entry catches up two content changes that shipped without a
+  skill version bump because nothing enforced one at the time (see the new
+  content-hash manifest guard below, added in this same release, to prevent
+  a repeat):
+  - PR #18 (NAK-139..143): new chart types beyond horizontal bar (lollipop,
+    grouped column, stacked column, dumbbell, scatter, quadrant with
+    computed threshold lines, donut, hero-number card); Steam capsule rows
+    for per-game bar charts; wide (16:9, 1200x675) and square (1:1,
+    1080x1080) export geometry replacing the earlier vertical (4:5) option.
+  - PR #43 (NAK-166/NAK-142): direct-label placement rules (values at bar/
+    line ends instead of legends, corner labels on quadrant charts) and the
+    embedded brand typography stack (Inter / JetBrains Mono / Quicksand)
+    used across card title, footer, and source-label text.
+- Added `packages/gmc-cli/scripts/gen-skill-manifest.mjs` and
+  `packages/gmc-cli/src/skill-manifest.test.js` (NAK-190): a content-hash
+  manifest (`skill/gmc-analysis.manifest.json`, outside the synced skill
+  directory) that fails `npm run test:cli` whenever `skill/gmc-analysis/**`
+  content changes without a matching `metadata.version` bump and manifest
+  regeneration (`npm run skill:manifest`) — the gap that let the two chart
+  entries above ship unversioned.
+
 ## 0.4.0 - 2026-07-09
 
 - Added `references/validity.md` (NAK-82): statistical-validity checklist

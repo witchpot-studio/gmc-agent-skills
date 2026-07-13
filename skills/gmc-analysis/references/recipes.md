@@ -95,6 +95,33 @@ gives the well-rated share. Divide by the unconditional bucket counts.
 Never read unconditional rating aggregates in low-traction buckets
 (pitfall P5).
 
+## R5. Repeatable cohort via a saved Game List
+
+When a cohort filter will be reused across a session or a recurring
+digest, persist it once instead of re-sending the inline filter on every
+call.
+
+```bash
+# 1. Create the filter-kind list once
+gmc lists create --name "<label>" --kind filter \
+  --filter '{"tags":["<tag>"],"reviewsMin":<n>}' --json   # -> data.id
+
+# 2. Reference it on every follow-up call instead of the inline filter
+gmc reviews patterns --source steam --list <id> --json
+gmc cohort brief --source steam --list <id> --json
+```
+
+Over MCP, `create_game_list` once, then pass its `id` as `game_list_id` to
+`list_games` / `market_aggregate` / `cohort_review_categories` /
+`cohort_evidence` on every follow-up call. Check `game_list.definition_hash`
+on each response — a changed hash means the stored DEFINITION was edited;
+re-state the cohort definition before comparing numbers. A stable hash does
+not freeze the population: filter lists re-evaluate live, so denominators
+can still move between calls. Composite (union) lists only work with `list_games`/
+`cohort_evidence` (this recipe's map-reduce sibling, R2); manual lists are
+not a `game_list_id` input over MCP (the CLI `--list <id>` flag does accept
+them) — read their membership with `gmc lists games <id>` / `get_game_list`.
+
 ## Output contract for every analysis
 
 Always include in your final answer: the cohort definition and size, how many

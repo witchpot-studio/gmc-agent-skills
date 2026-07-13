@@ -34,24 +34,67 @@ violates the non-negotiables below must not carry GMC attribution.
    entirely. If one must appear, add a second, visually separate footnote
    line: `External estimate: <source> — not GMC data`.
 7. **Opaque background** (`#fafaf7` page, `#ffffff` card). Never export
-   transparent PNGs. Recommended export: X 1200x675, LinkedIn 1200x627,
-   or the natural 720px card width at 2x.
+   transparent PNGs. Export geometry: 16:9 1200x675 (X default) or 1:1
+   1080x1080 (X-safe; donut/kpi/quadrant read best). Vertical (4:5) cards
+   are not produced. Default to 16:9 when unsure.
 
 ## Picking the chart type from gmc output shapes
 
 | Output | Shape | Chart |
 |---|---|---|
 | `gmc games aggregate --group-by <dim>` / MCP `market_aggregate` | 6+ groups, rank matters | Horizontal bar, sorted desc |
+| same | 6+ groups, rank matters, compact point emphasis | Lollipop (bar_h variant) |
 | same | 2-5 groups | Vertical column |
+| same | 2-4 series × categories, e.g. release count by year × price band | Grouped column |
+| same | 2-4 part-of-whole series across categories | Stacked column |
+| same | before/after pairs per category, exactly 2 series | Dumbbell |
 | same, time buckets (release windows, months) | series over time | Line (single/few series) or column |
 | MCP `market_aggregate` with `segment_filter` | segment vs base | Two big numbers + ratio, or grouped bar |
 | `gmc reviews patterns` / MCP `cohort_evidence` / clustered `negativeThemes` | theme -> game counts | Horizontal bar; caption carries `x of N usable games` |
 | MCP `coverage_check` / `gmc games count --group-by coverage` | composition, 2-4 segments | Donut with absolute counts printed, or one 100% stacked bar |
+| any tool output with x/y metric pairs per point | two metrics correlation | Scatter |
+| any tool output with x/y metric pairs for positioning | scatter + median threshold lines + 4 descriptive corner labels; thresholds are computed from plotted values, never chosen | Quadrant |
 | single KPI (one count, one median, one share) | one number | Hero number card (no chart canvas) |
 
 Rules of thumb: when unsure, use a horizontal bar. One message per card.
 Never: 3D, dual axes, cropped bar baselines, pie with 5+ slices, line
 charts for non-time data.
+
+## Steam capsules for game rows
+
+When bar rows are individual game titles, show the Steam capsule
+(`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/{appid}/capsule_231x87.jpg`,
+231x87) left of the row label. Preload images before render; skip rows whose
+image failed so the text-only fallback keeps the layout. Scatter/quadrant
+points get the same treatment as a thumbnail overlay per the visual guide's
+thumbnail-overlay pattern: a white, 1px-framed capsule anchored near the
+point with a dashed leader line back to it, instead of a row-left capsule.
+
+```js
+const rows = [{ label: '{{GAME TITLE}}', appid: 0 }];
+const capsuleImages = await Promise.all(rows.map(({ appid }) => new Promise((resolve) => {
+  if (!appid) return resolve(null);
+  const img = new Image();
+  img.onload = () => resolve(img);
+  img.onerror = () => resolve(null);
+  img.src = `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/capsule_231x87.jpg`;
+})));
+
+const steamCapsules = {
+  id: 'steamCapsules',
+  afterDraw(chart) {
+    const yScale = chart.scales.y;
+    if (!yScale) return;
+    const { ctx } = chart;
+    yScale.ticks.forEach((_, i) => {
+      const img = capsuleImages[i];
+      if (!img) return;
+      const y = yScale.getPixelForTick(i) - 14;
+      ctx.drawImage(img, yScale.left - 66, y, 54, 20);
+    });
+  }
+};
+```
 
 ## Color
 
@@ -79,7 +122,7 @@ network access for fonts, Chart.js CDN, and the brand lockup.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Quicksand:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   :root {
@@ -88,7 +131,7 @@ network access for fonts, Chart.js CDN, and the brand lockup.
     --rule: #e8e5de; --accent: #ec7336;
     --sans: 'Inter', system-ui, sans-serif;
     --mono: 'JetBrains Mono', ui-monospace, monospace;
-    --serif: 'Instrument Serif', Georgia, serif;
+    --title: 'Quicksand', 'Inter', system-ui, sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); font-family: var(--sans); color: var(--ink);
@@ -101,8 +144,8 @@ network access for fonts, Chart.js CDN, and the brand lockup.
               color: var(--accent); max-width: 76%; }
   .card-cat { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
               text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
-  .card-title { padding: 26px 20px 8px; font-family: var(--serif);
-                font-size: 34px; line-height: 1.12; font-weight: 400; }
+  .card-title { padding: 26px 20px 8px; font-family: var(--title);
+                font-size: 34px; line-height: 1.12; font-weight: 700; }
   .chart-wrap { position: relative; margin: 18px 20px 8px;
                 min-height: 470px; height: 470px; }
   .card-foot { display: flex; justify-content: space-between; align-items: center;
@@ -208,7 +251,8 @@ Variants:
 
 Japanese edition: add `&family=Noto+Sans+JP:wght@400;500;600` to the fonts
 URL, append `'Noto Sans JP'` to `--sans`, set `<html lang="ja">`, and use
-`GMCデータベース` as the source label. Steam tags in JA charts:
+`GMCデータベース` as the source label. Add `&family=Noto+Serif+JP:wght@400&`
+to the fonts URL so JA titles render serif. Steam tags in JA charts:
 `English Tag(日本語タグ名)` on first appearance.
 
 ## Capture

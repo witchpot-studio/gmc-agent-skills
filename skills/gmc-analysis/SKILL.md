@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.4.0
+  version: 0.5.0
 ---
 
 # GMC Analysis
@@ -95,6 +95,50 @@ Search commands are optimized for row retrieval. Do not expect
 `pagination.total` from `gmc games search` or CLI-composed evidence packs
 unless you explicitly pass `--include-total`; for count-only questions use
 `gmc games count` instead.
+
+## Saved Game Lists (reusable cohort definitions)
+
+A Game List is a workspace-scoped, reusable cohort input — persist a filter
+(or an explicit appid set) once instead of re-sending a large inline filter
+on every call.
+
+- Manage lists via `gmc lists ...` (`list`, `create`, `show`, `games`, `add`,
+  `remove`, `delete`) or the MCP tools `list_game_lists` / `get_game_list` /
+  `create_game_list` / `update_game_list` / `add_game_list_items` /
+  `remove_game_list_item` / `delete_game_list`. All are 0-credit and scoped
+  to the caller's own workspace.
+- Two kinds: `manual` (explicit appid membership) and `filter` (a stored
+  `GameFilter`, re-evaluated live against current data on every read). The
+  MCP `game_list_id` input accepts `filter`-kind lists only; the CLI
+  `--list <id>` flag resolves membership server-side and accepts BOTH kinds.
+- Pass a filter-kind list's `id` as `game_list_id` to `list_games`,
+  `market_aggregate`, `cohort_review_categories`, or `cohort_evidence`
+  instead of re-sending the inline filter — mutually exclusive with
+  `filter` (`INVALID_INPUT` if both or neither are given). CLI equivalent:
+  `--list <id>` on `gmc reviews patterns`, `gmc marketing patterns`, and
+  `gmc cohort ...` (cohort-evidence-shaped commands only — `gmc games
+  count`/`gmc games aggregate` have no `--list` flag; use `market_aggregate`
+  with `game_list_id` over MCP for that).
+- The response's `game_list.definition_hash` (a SHA-256 over `{kind,
+  filter, sort}`) tells you whether the stored definition changed between
+  calls — diff hashes across calls instead of re-diffing the filter
+  yourself.
+
+Sharp edges:
+
+- **Composite (union) lists** work only with `list_games`/`cohort_evidence`;
+  `market_aggregate`/`cohort_review_categories` reject them with
+  `COMPOSITE_LIST_UNSUPPORTED_FOR_TOOL` (those two are single aggregate
+  calls that cannot be bound to an explicit appid population).
+- **Manual lists cannot be used as `game_list_id`** (MCP only) — a
+  `kind:"manual"` list fails `GAME_LIST_KIND_UNSUPPORTED` there. Use the
+  CLI `--list <id>` flag (which accepts manual lists), or read membership
+  directly (`gmc lists games <id>` / `get_game_list`).
+- `delete_game_list` is destructive and, over MCP, uses a confirm-by-
+  exact-name two-call contract: a call without `confirm` fails
+  `CONFIRMATION_REQUIRED`, naming the list; only pass `confirm` set to that
+  exact name after the user has explicitly asked to delete it — never
+  guess or pre-fill it speculatively.
 
 ## Hard rules
 
