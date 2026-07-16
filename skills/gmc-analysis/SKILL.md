@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.5.0
+  version: 0.6.0
 ---
 
 # GMC Analysis
@@ -167,6 +167,35 @@ Sharp edges:
   before fanning out and keep headroom; on HTTP 429 respect `Retry-After`.
   Details in the quota reference.
 - Preserve `meta.requestId` values for anything you may need to report.
+
+## Product documentation (gmc-docs)
+
+Public product documentation lives at `https://docs.gamemarketcopilot.com`
+(read-only, no auth). It covers product features, setup, plans/credits,
+API/CLI/MCP usage, troubleshooting, and methodology definitions (what a
+field like `coverage` or `primary_market_tag` means); it carries no market
+data.
+
+Consult it BEFORE answering when you need current product behavior, setup
+steps, plan/credit limits, or a definition you are not confident is still
+accurate:
+
+- Docs MCP (when the client supports a second MCP connection): connect to
+  `https://docs.gamemarketcopilot.com/mcp` (no auth) and call `search_docs`,
+  `get_page`, `list_pages`, or `get_navigation`.
+- Otherwise, plain HTTP (no second MCP connection is required): fetch
+  `https://docs.gamemarketcopilot.com/llms.txt` for the page index, or
+  append `.md` to any docs page URL to fetch it as Markdown (e.g.
+  `https://docs.gamemarketcopilot.com/plans.md`).
+
+Cite the canonical docs URL (the page without `.md`) whenever an answer
+draws on it.
+
+Keep the distinction crisp: `gmc-docs` is product documentation; the GMC
+MCP/CLI is market data. Product docs are never market evidence, and they
+never override this skill; it remains the source of truth for statistical
+validity, claim safety, and chart guidance (hard rules and references
+above).
 
 ## Chart cards
 

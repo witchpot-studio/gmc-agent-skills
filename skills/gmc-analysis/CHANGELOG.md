@@ -1,5 +1,23 @@
 # gmc-analysis skill changelog
 
+## 0.6.0 - 2026-07-17
+
+- New "Product documentation (gmc-docs)" section in SKILL.md:
+  points at the public docs site (`https://docs.gamemarketcopilot.com`) for
+  product features, setup, plans/credits, API/CLI/MCP usage,
+  troubleshooting, and methodology definitions; documents the read-only
+  Docs MCP (`search_docs`/`get_page`/`list_pages`/`get_navigation`, no
+  auth) for clients that support a second MCP connection, and `llms.txt` /
+  per-page `.md` fetch over plain HTTP as the no-second-MCP-required
+  fallback; requires citing the canonical docs URL when an answer draws on
+  it. Keeps the distinction crisp: `gmc-docs` is product documentation, not
+  market evidence; this skill remains the source of truth for statistical
+  validity, claim safety, and chart guidance, and the docs never override
+  it.
+- `references/quota.md`: one-line pointer to the published plan/credit page
+  (`https://docs.gamemarketcopilot.com/plans.md`) alongside the existing
+  "treat as indicative" caveat.
+
 ## 0.5.0 - 2026-07-13
 
 - New "Saved Game Lists" section in SKILL.md, plus recipe R5 in

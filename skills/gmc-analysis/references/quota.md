@@ -6,8 +6,10 @@ Starter 2,500 credits/month, Pro 7,000; the counter resets at 00:00 UTC on
 the first of each month. Anonymous public preview is far smaller. Credits
 are charged when a request is accepted at the gate, so requests that later
 fail validation or 404 still consume — validate appids before batch
-fan-outs. Treat these numbers as indicative — the response metadata is the
-source of truth.
+fan-outs. Treat these numbers as indicative; the response metadata is the source
+of truth. Current published plan limits live on the pricing page at
+https://gamemarketcopilot.com/plans, and
+https://docs.gamemarketcopilot.com/plans explains how credits work.
 
 ## Rules
 
