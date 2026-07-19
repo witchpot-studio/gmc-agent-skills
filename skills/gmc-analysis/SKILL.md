@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.6.0
+  version: 0.7.0
 ---
 
 # GMC Analysis
@@ -51,8 +51,9 @@ applies identically. Mechanics map as follows:
 - Cohort evidence (`reviews patterns`, `cohort ...`) -> `cohort_evidence`,
   `cohort_review_categories`, `search_review_claims`.
 - Single-title drill-down (`games detail` / `games analysis`) ->
-  `game_profile`; name resolution -> `resolve`; showcases ->
-  `showcase_fit`.
+  `game_profile`; name resolution -> `resolve`; showcase submission
+  candidates -> `showcase_fit`; per-title participation history ->
+  `showcase_history`.
 - The response envelope differs from the CLI: MCP tool responses carry
   `meta.quota` = `{ used, limit, remaining, resets_at }` (credits) plus
   `meta.credits_charged`, `meta.basis`, `meta.denominator`,
@@ -139,6 +140,52 @@ Sharp edges:
   `CONFIRMATION_REQUIRED`, naming the list; only pass `confirm` set to that
   exact name after the user has explicitly asked to delete it — never
   guess or pre-fill it speculatively.
+
+## Showcase workflows (fit + history)
+
+Two complementary surfaces; use them as a pair for "where should we
+submit?" questions:
+
+- **Forward-looking fit**: `gmc showcases fit --source steam <externalId>
+  --json` (MCP: `showcase_fit`) — tag-overlap candidates from the public
+  showcase directory, filtered to currently recommendable entries.
+- **Participation history**: `gmc showcases history --source steam
+  <externalId> --json` (MCP: `showcase_history`) — which showcases/events a
+  title actually appeared in, with a `directory` link (series, next
+  edition, submission window) attached when the event name resolves to the
+  directory. The chain "similar games -> which showcases did they attend ->
+  next edition deadline" is: resolve the cohort, run history per title,
+  then read the next-edition field on the linked rows.
+- Field casing differs by transport: the CLI keeps the API's camelCase
+  (`directory.nextEdition.submissionCloses`), while the MCP tool emits
+  snake_case (`directory.next_edition.submission_closes`). Look for the
+  casing that matches the surface you called before concluding a field is
+  absent.
+
+Interpretation guardrails (these are honesty rules, not suggestions):
+
+- Read the response's warnings/caveats BEFORE interpreting missing
+  `directory` fields. On plan-limited responses the appearance rows remain
+  but every directory link is redacted (the CLI summary then reports
+  `linkedToDirectoryCount: null`, and a plan-limited warning is attached) —
+  that state is **indeterminate**, not "unlinked". The same applies when a
+  directory-lookup warning is present.
+- Absent such warnings, a row without `directory` means the event name is
+  **not linked** to the directory (unresolved alias, or a non-showcase
+  event such as an award show) — it NEVER means the appearance didn't
+  happen. Do not drop unlinked rows from the story; label them as
+  unlinked.
+- Over MCP, `showcase_history` merges a second source (`steam_event`,
+  Steam-operated events like Next Fest). A `meta.warnings` entry saying the
+  steam_event source is unavailable means that source was NOT collected —
+  report "research-source only", never "zero Steam event participations".
+  The CLI command covers the research source only and says so in its
+  warnings.
+- The next-edition data depends on the directory's edition coverage,
+  which is still sparse for submission windows — absence of the
+  next-edition field (or of its submission-close date) means "window
+  unknown", not "no upcoming edition". When present, check the
+  submission-close date against today before recommending a submission.
 
 ## Hard rules
 

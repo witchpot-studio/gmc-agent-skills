@@ -1,5 +1,24 @@
 # gmc-analysis skill changelog
 
+## 0.7.0 - 2026-07-20
+
+- New "Showcase workflows (fit + history)" section in SKILL.md (NAK-92 /
+  NAK-240): documents `gmc showcases history` (MCP: `showcase_history`)
+  alongside `showcases fit`, and the chain "similar games -> which
+  showcases did they attend -> next edition deadline" via the appearance
+  rows' `directory.next_edition`. Adds the interpretation guardrails as
+  honesty rules: missing `directory` = "not linked", never "never
+  participated"; a steam_event source-unavailable warning means
+  research-source-only history, never zero participations; absent
+  next-edition data means "window unknown", and the submission-close date
+  must be checked against today before recommending a submission. Documents
+  the transport casing split (CLI camelCase `nextEdition.submissionCloses`
+  vs MCP snake_case `next_edition.submission_closes`) and that plan-limited
+  responses redact directory links (indeterminate, not "unlinked" —
+  check warnings first).
+- MCP-only mapping updated: showcases now map to both `showcase_fit`
+  (submission candidates) and `showcase_history` (participation history).
+
 ## 0.6.0 - 2026-07-17
 
 - New "Product documentation (gmc-docs)" section in SKILL.md:
