@@ -1,5 +1,22 @@
 # gmc-analysis skill changelog
 
+## 0.8.0 - 2026-08-06
+
+- New "Steam \"More Like This\" neighbours" section in SKILL.md (NAK-459):
+  documents `gmc games more-like-this` (MCP: `more_like_this`), the six
+  collected storefront countries with the `us` default, and its use as a
+  cohort seed that feeds `coverage_check` and the cohort workflows.
+- Adds the interpretation guardrails as honesty rules: `position` is
+  Steam's display order and never a similarity score or ranking;
+  `observed_empty` (carousel collected and empty) must be told apart from
+  `not_observed` (not collected yet), and neither may be reported as "this
+  game has no similar games"; `stale: true` means date the claim rather
+  than drop it or present it as current; candidates with
+  `resolved: false` stay in the set as unresolved rather than being
+  silently dropped.
+- MCP-only mapping updated: single-title drill-down now also lists Steam
+  store-page neighbours -> `more_like_this`.
+
 ## 0.7.0 - 2026-07-20
 
 - New "Showcase workflows (fit + history)" section in SKILL.md (NAK-92 /
