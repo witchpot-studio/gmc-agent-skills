@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.7.0
+  version: 0.8.0
 ---
 
 # GMC Analysis
@@ -53,7 +53,8 @@ applies identically. Mechanics map as follows:
 - Single-title drill-down (`games detail` / `games analysis`) ->
   `game_profile`; name resolution -> `resolve`; showcase submission
   candidates -> `showcase_fit`; per-title participation history ->
-  `showcase_history`.
+  `showcase_history`; Steam store-page neighbours (`games more-like-this`)
+  -> `more_like_this`.
 - The response envelope differs from the CLI: MCP tool responses carry
   `meta.quota` = `{ used, limit, remaining, resets_at }` (credits) plus
   `meta.credits_charged`, `meta.basis`, `meta.denominator`,
@@ -186,6 +187,39 @@ Interpretation guardrails (these are honesty rules, not suggestions):
   next-edition field (or of its submission-close date) means "window
   unknown", not "no upcoming edition". When present, check the
   submission-close date against today before recommending a submission.
+
+## Steam "More Like This" neighbours
+
+`gmc games more-like-this --source steam <externalId> --json` (MCP:
+`more_like_this`) returns the games Steam itself showed in a title's
+store-page "More Like This" carousel, for one storefront country.
+`--country` accepts `de`, `fr`, `gb`, `jp`, `kr`, `us` and defaults to
+`us`; omit the flag unless the question is about a specific storefront.
+
+Use it as a cohort seed — "who does Steam put next to this game?" — then
+feed the candidate appids into `coverage_check` and the cohort workflows
+above. It is an observation of Steam's storefront, not a computed
+similarity model, so it answers "what does Steam associate?" and not "what
+is objectively similar?".
+
+Interpretation guardrails (honesty rules, not suggestions):
+
+- `position` is the order Steam displayed the candidate. It is **not** a
+  similarity score and not a relevance ranking. Never sort by it as if it
+  measured closeness, and never say "the most similar game is X" because X
+  sat at position 1.
+- An empty candidate list is ambiguous until you read `availability`.
+  `observed_empty` means the store page was collected and the carousel was
+  empty; `not_observed` means that game and country pair has not been
+  collected yet. Report the second as missing collection — presenting it as
+  "this game has no similar games" states a collection gap as a fact about
+  the market.
+- `stale: true` means the observation is older than `staleAfterDays`. The
+  candidates are still returned in full; date the claim ("as observed in
+  <month>") instead of dropping it or presenting it as current.
+- Candidates with `resolved: false` are part of the observed set but have
+  no catalog details (delisted, or not a game-type app). Keep them in the
+  count and label them unresolved; do not silently drop them.
 
 ## Hard rules
 
