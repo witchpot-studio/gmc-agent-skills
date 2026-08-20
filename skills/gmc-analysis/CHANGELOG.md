@@ -1,5 +1,124 @@
 # gmc-analysis skill changelog
 
+## 0.14.0 - 2026-08-20
+
+- New "Query-backed lists (structured plus natural language)" section in
+  SKILL.md (NAK-525): documents the version 2 query envelope, the rule that
+  `structured` decides membership while `semanticQuery` only orders results
+  inside it under the default `rank` mode, and the `total_kind` vocabulary
+  (`exact` / `approximate` / `at_least` / `lexical_only` / `clipped`) with the
+  honesty rule that anything but `exact` must be reported as approximate.
+- Adds the two new tools to the Game List inventory: `resolve_game_list`
+  (non-destructive, answers `RESOLUTION_REQUIRED`, 2 credits every call
+  including a reuse) and `materialize_game_list` (freezes membership, requires
+  `confirm: true`, 2 credits, never speculative). CLI equivalents:
+  `gmc lists resolve <id>` and `gmc lists materialize <id> --confirm`.
+- New sharp edge: `market_aggregate` / `cohort_review_categories` /
+  `cohort_evidence` reject a `semanticQuery` list with
+  `SEMANTIC_LIST_UNSUPPORTED_FOR_TOOL`, uniformly across `semanticMode`; a
+  structured-only v2 envelope behaves exactly like a flat filter.
+- Records `membership`, `definition_revision` and `last_resolved_at` on the
+  list read tools, and what a frozen (`snapshot`) list does.
+- Warns that `sort` and `as_of` are refused (not ignored) when reading a
+  `semanticQuery` list or a frozen one.
+- Documents the resolve conflict outcomes (`CONFLICT` /
+  `definition_revision_mismatch`, `NOT_FOUND`, `SNAPSHOT_IS_FROZEN`) for a list
+  edited, deleted or frozen while a resolve is running.
+
+## 0.13.0 - 2026-08-20
+
+- New "Per-family collection status" section in SKILL.md (NAK-596): documents
+  the new MCP-only `game_collection_status` tool — no CLI command yet, same
+  deferred posture as `game_language_support` (NAK-571) — agent-surface
+  parity for `GET /api/v1/games/:appid/collection-status` (NAK-444).
+- Adds the interpretation guardrails as honesty rules: `unknown` differs from
+  `not_collected` in kind, not degree, and must never be restated as
+  uncollected; `available: false` and the `collection_status_unavailable`
+  warning token are coupled one-for-one; `requestable` states only whether
+  requesting analysis routes demand to that family today (only `research`
+  is), never a statement about any other family's schedule; the tool is
+  read-only and never enqueues collection work; an unknown appid charges the
+  weight-1 credit before returning `NOT_FOUND`.
+- MCP-only mapping updated: per-family collection status ->
+  `game_collection_status`.
+
+## 0.12.0 - 2026-08-12
+
+- Adds "Which review count you are looking at" (NAK-531): Steam returns two
+  review totals depending on `purchase_type`, and they can differ by orders
+  of magnitude. `purchase_type=all` is GMC's headline current total and is
+  served by `game_profile` as `detail.reviewCounts`; every plain `reviews`
+  field elsewhere stays the narrower `purchase_type=steam` family.
+- Records the honesty rules that go with it: name the family and the
+  observation date with any count; `allAvailable: false` means not collected
+  rather than zero; compare the families only through
+  `steamAtAllObservation`, because the top-level `steam` observation can be
+  newer than `all`; derive a positive rate inside one family; never splice
+  the families into one series, so a steam history's last point being
+  smaller than the all-family headline is not a decline; and neither family
+  is sales.
+
+## 0.11.0 - 2026-08-10
+
+- MCP-only mapping extended with the publisher/developer surface (NAK-383):
+  `entity_resolve` (raw Steam publisher/developer string -> stable
+  `entityId`) and `entity_profile` (that entity's portfolio, composition,
+  release cadence and audience footprint). There is no CLI equivalent yet,
+  so the entry states the resolve-then-profile order explicitly rather than
+  mapping from a command.
+- Adds the interpretation guardrails as honesty rules: resolve before
+  profiling because a game record credits names and one entity commonly has
+  several raw spellings, so a name-keyed lookup omits the titles credited to
+  the siblings; `resolved: null` means that exact case-sensitive,
+  whitespace-significant string is unknown to the master tables and never
+  that the entity has no titles; `aggregatesAvailability: not_collected`
+  means the aggregates have not been computed yet, so the block is absent
+  rather than zero, and never that the studio has published nothing (the
+  live `pagination.total` is still the real title count); a null
+  `totalFollowers` is not collected rather than zero, and follower counts
+  can never be summed across platforms.
+
+## 0.10.0 - 2026-08-09
+
+- New "Review-count history and the events around it" section in SKILL.md
+  (NAK-428): documents `gmc games review-history` (MCP:
+  `game_review_history`), and states that it has no flags because the
+  endpoint has no query parameters — the full daily series is always
+  returned and the agent windows it.
+- Adds the interpretation guardrails as honesty rules: scale by date and
+  never by array index because collection has real gaps; the series is
+  published-run-only and contamination-filtered at a 2% tolerance, so
+  differences are safe to report but the last point can lag the headline
+  review count; an empty series is no collected history, not a review count
+  of zero; empty `data.events` / `data.discountWindows` are collection
+  states, never "no announcements" or "never discounted"; announcements are
+  official-feed only and capped at the most recent 1000 items; a discount
+  window is an observed >=20%-threshold state, not an exact Steam sale
+  period, whose `endDate` is the first below-threshold observation and is
+  not part of the window (with gaps in the observations, the actual last
+  discounted day cannot be inferred from it) and whose `discountPercent` is
+  the opening observation; events support temporal comparison only, never
+  causal attribution.
+- MCP-only mapping updated: review-count history with its
+  lifecycle/announcement/discount context -> `game_review_history`.
+
+## 0.9.0 - 2026-08-08
+
+- New "Review topics by review language" section in SKILL.md (NAK-455):
+  documents `gmc games language-topics` (MCP: `game_language_topics`), its
+  two flags (`--min-reviews` 10-200, `--include-insufficient`), and the
+  fact that this is the whole parameter surface because it is the API's.
+- Adds the interpretation guardrails as honesty rules: read
+  `data.evidenceState` first and never report `insufficient_evidence` or
+  `not_analyzed` as zero; the population is the analyzed subset (about
+  2,500 titles), not the Steam catalog; review language is never a country,
+  region, market, or culture; observed `counts`/`rates` and sample-expanded
+  `estimates` stay separate; name which of the four denominators a
+  percentage is over; date every claim with `data.snapshot`; `coverage`
+  survives the `reviews.topicLanguages.full` plan lock.
+- MCP-only mapping updated: review topics by review language ->
+  `game_language_topics`.
+
 ## 0.8.0 - 2026-08-06
 
 - New "Steam \"More Like This\" neighbours" section in SKILL.md (NAK-459):

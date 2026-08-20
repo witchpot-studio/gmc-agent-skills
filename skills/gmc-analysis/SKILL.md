@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.8.0
+  version: 0.14.0
 ---
 
 # GMC Analysis
@@ -54,7 +54,29 @@ applies identically. Mechanics map as follows:
   `game_profile`; name resolution -> `resolve`; showcase submission
   candidates -> `showcase_fit`; per-title participation history ->
   `showcase_history`; Steam store-page neighbours (`games more-like-this`)
-  -> `more_like_this`.
+  -> `more_like_this`; review topics by review language (`games
+  language-topics`) -> `game_language_topics`; review-count history with
+  its lifecycle/announcement/discount context (`games review-history`) ->
+  `game_review_history`.
+- Per-family collection status ("has GMC actually collected X for this
+  game?") has no CLI command yet and is MCP-only: `game_collection_status`
+  (see the dedicated section below).
+- Publisher/developer questions ("what else has this studio shipped", how
+  often they release, how big their audience is) have no CLI command yet
+  and are MCP-only: `entity_resolve` turns a raw Steam publisher/developer
+  string into a stable `entityId`, then `entity_profile` returns that
+  entity's portfolio, composition, release cadence and audience footprint.
+  Always resolve first — a game record credits names, never ids — and pass
+  the id, since one entity commonly has several raw spellings and a
+  name-keyed lookup silently omits the titles credited to the siblings.
+  `resolved: null` means that exact string (case-sensitive, whitespace
+  included) is not in the master tables; it never means the entity has no
+  titles. Read `aggregatesAvailability` before anything else:
+  `not_collected` means the aggregates were not computed yet, so the block
+  is absent rather than zero, and it never means the studio has published
+  nothing — `pagination.total` still carries the live title count. A null
+  `totalFollowers` is not collected, never zero, and follower counts can
+  never be summed across platforms.
 - The response envelope differs from the CLI: MCP tool responses carry
   `meta.quota` = `{ used, limit, remaining, resets_at }` (credits) plus
   `meta.credits_charged`, `meta.basis`, `meta.denominator`,
@@ -105,10 +127,13 @@ A Game List is a workspace-scoped, reusable cohort input — persist a filter
 on every call.
 
 - Manage lists via `gmc lists ...` (`list`, `create`, `show`, `games`, `add`,
-  `remove`, `delete`) or the MCP tools `list_game_lists` / `get_game_list` /
-  `create_game_list` / `update_game_list` / `add_game_list_items` /
-  `remove_game_list_item` / `delete_game_list`. All are 0-credit and scoped
-  to the caller's own workspace.
+  `remove`, `delete`, `resolve`, `materialize`) or the MCP tools
+  `list_game_lists` / `get_game_list` / `create_game_list` /
+  `update_game_list` / `add_game_list_items` / `remove_game_list_item` /
+  `delete_game_list` / `resolve_game_list` / `materialize_game_list`. All are
+  scoped to the caller's own workspace. The first seven are 0-credit;
+  `resolve_game_list` and `materialize_game_list` cost 2 each (see
+  "Query-backed lists" below).
 - Two kinds: `manual` (explicit appid membership) and `filter` (a stored
   `GameFilter`, re-evaluated live against current data on every read). The
   MCP `game_list_id` input accepts `filter`-kind lists only; the CLI
@@ -126,8 +151,56 @@ on every call.
   calls — diff hashes across calls instead of re-diffing the filter
   yourself.
 
+### Query-backed lists (structured plus natural language)
+
+A `filter` list's definition may also be the version 2 query envelope:
+
+```json
+{"version":2,"mode":"query",
+ "structured":{"tags":["cozy"],"reviewsMin":500},
+ "semanticQuery":"games about running a shop",
+ "semanticMode":"rank"}
+```
+
+Read it exactly this way, and say it this way to the user:
+
+- **`structured` decides membership.** Under the default `semanticMode:"rank"`
+  the natural-language part only ORDERS results inside that universe; it never
+  adds a game the structured conditions exclude. Under `"narrow"` it also
+  narrows membership.
+- **The total may not be a catalog count.** `meta.resolution.total_kind` says
+  which: `exact`, `approximate`, `at_least` (a floor), `lexical_only` (the total
+  counts the lexical population while the page is wider), or `clipped`. Anything
+  other than `exact` must be reported as approximate. Never restate it as an
+  exact number.
+- **A `semanticQuery` list needs a resolution before its games can be read.**
+  `list_games` / `get_game_list` / `gmc lists games <id>` answer
+  `RESOLUTION_REQUIRED` until `resolve_game_list` (CLI: `gmc lists resolve <id>`)
+  has run. Resolve costs 2 credits every call, including when an existing
+  resolution is reused, and it never changes membership.
+- **Do not pass `sort` or `as_of` when reading a `semanticQuery` list or a
+  frozen one.** Both are refused with `INVALID_INPUT`: such a list is served in
+  its resolved ranking order or its stored order, so a sort you supplied could
+  only be ignored. Omit them.
+- **If a resolve comes back `CONFLICT`, someone edited the list while it ran.**
+  Re-read the list and resolve again; `details.reason` is
+  `definition_revision_mismatch`. `NOT_FOUND` or `SNAPSHOT_IS_FROZEN` from a
+  resolve means the list was deleted or frozen mid-flight.
+- **`materialize_game_list` is not the same operation.** It FREEZES the current
+  members, so the list stops following its definition, and the only way back is
+  to discard the frozen rows. It costs 2 credits, requires `confirm: true` (CLI:
+  `--confirm`), and must never be called speculatively — if the user only wants
+  the list evaluated now, `resolve_game_list` is the non-destructive option.
+
 Sharp edges:
 
+- **A `semanticQuery` list cannot be aggregated.** `market_aggregate` and
+  `cohort_review_categories` (and `cohort_evidence`) reject it with
+  `SEMANTIC_LIST_UNSUPPORTED_FOR_TOOL`, in `rank` mode as well as `narrow`.
+  They could only aggregate the structured half, which is a different population
+  from the one the list contains — a wrong number, not a degraded one. Use
+  `list_games` with the `game_list_id` to read its games. A **structured-only**
+  v2 envelope has no such limit and behaves exactly like a flat filter.
 - **Composite (union) lists** work only with `list_games`/`cohort_evidence`;
   `market_aggregate`/`cohort_review_categories` reject them with
   `COMPOSITE_LIST_UNSUPPORTED_FOR_TOOL` (those two are single aggregate
@@ -141,6 +214,10 @@ Sharp edges:
   `CONFIRMATION_REQUIRED`, naming the list; only pass `confirm` set to that
   exact name after the user has explicitly asked to delete it — never
   guess or pre-fill it speculatively.
+- `list_game_lists` reports `membership` per row and `get_game_list` adds
+  `definition_revision` and `last_resolved_at`. A `membership:"snapshot"` list
+  is frozen: it serves stored rows, ignores its definition, and answers
+  `SNAPSHOT_IS_FROZEN` if you try to resolve it.
 
 ## Showcase workflows (fit + history)
 
@@ -220,6 +297,183 @@ Interpretation guardrails (honesty rules, not suggestions):
 - Candidates with `resolved: false` are part of the observed set but have
   no catalog details (delisted, or not a game-type app). Keep them in the
   count and label them unresolved; do not silently drop them.
+
+## Review topics by review language
+
+`gmc games language-topics --source steam <externalId> --json` (MCP:
+`game_language_topics`) breaks one game's review topics down by the
+language each review was written in — one row per topic cluster x
+language. `--min-reviews <10-200>` moves the evidence floor (server
+default 30); `--include-insufficient` also returns the rows below it,
+capped by the server. Those two flags are the whole parameter surface,
+matching the API exactly: there is no language filter, topic filter, or row
+limit, so narrow by reading the rows rather than by inventing a flag.
+
+Use it for "which topics land differently depending on the language players
+review in?" — a localization and community-priority question, not a
+market-sizing one.
+
+Field paths differ by surface: the CLI and REST wrap the payload, so read
+`data.evidenceState` / `data.snapshot` / `data.coverage`. The MCP tool
+returns the same fields at the top level, so read `evidenceState` /
+`snapshot` / `coverage`. The guardrails below name the CLI path; drop the
+`data.` prefix over MCP.
+
+Interpretation guardrails (honesty rules, not suggestions):
+
+- **Read `data.evidenceState` first.** `ready` = at least one topic x
+  language row cleared the floor. `insufficient_evidence` = rows exist but
+  none cleared it — thin evidence, not absent sentiment. `not_analyzed` =
+  no rows exist — no data, not zero mentions. Neither of the last two is
+  ever a zero, and neither may be reported as "no complaints in that
+  language".
+- **The population is the analyzed subset**, about 2,500 titles today,
+  selected for review analysis rather than sampled from the catalog. Say so
+  every time, and never extrapolate a share of Steam from it.
+- **Review language is not geography.** It is the language the text was
+  written in — never a country, a region, a market, or a culture. "Reviews
+  written in German" is a claim you can make; "German players" is not.
+- **Observed and estimated are separate objects.** `counts`/`rates` are
+  observed; `estimates` are sample-expanded and carry
+  `samplingWeightMethod`. Never combine them in one figure, and always say
+  which one a number came from.
+- **Name the denominator.** `counts.sourceReviews`, `sampledReviews`,
+  `analyzedReviews`, and `distinctReviews` are four different bases;
+  `min_reviews` is applied to `distinctReviews`.
+- **Date the claim.** `data.snapshot` carries `periodStart`/`periodEnd`,
+  `analysisVersion`, and `generatedAt`. The aggregate is refreshed by the
+  reviews pipeline, so report it as a snapshot rather than as current.
+- **`data.coverage` survives the plan lock.** When
+  `reviews.topicLanguages.full` is locked you receive at most 5 rows with
+  `estimates` reduced to `samplingWeightMethod`, but `coverage` still
+  states how much evidence exists — present the rows as a preview and name
+  the lock key.
+
+## Which review count you are looking at
+
+Steam's `appreviews` endpoint returns two different totals depending on
+`purchase_type`, and the gap is not a rounding difference. Measured
+2026-07-28: appid 570 came back with 14,375 under the default and 2,746,987
+with `purchase_type=all`.
+
+- `steam` is the endpoint DEFAULT and counts only reviewers who activated the
+  game on Steam. **Every plain `reviews` field in every tool and CLI payload
+  is this family**, including list rows, the `reviews_desc` sort, the
+  `reviews_min`/`reviews_max` filters, `market_aggregate`'s `*_reviews`
+  metrics, and the entity portfolio aggregates.
+- `all` counts every reviewer and is a strict superset. It is GMC's headline
+  current total and is served by `game_profile` as `detail.reviewCounts`.
+
+Rules:
+- **Name the family and the observation date** with any count you report.
+  "2.7M reviews across all purchase types, observed 2026-08-11" is a claim;
+  "2.7M reviews" is not.
+- **`allAvailable: false` means not collected.** The wider count does not
+  exist for that title yet. It is never zero, and the steam number beside it
+  must not be presented as if it were the wide one.
+- **Compare the families only through `steamAtAllObservation`.** The
+  top-level `steam` observation can be newer than `all`, so a share taken
+  across the two would mix dates. `steamShare` is already computed from the
+  same-row pair.
+- **Derive a positive rate inside one family.** `snapshot.rating` is the
+  steam-derived percentage; pairing it with an all-family total is a
+  mixed-family figure.
+- **Never splice the families into one series.** The all family only starts
+  at its capture epoch, so a joined line shows a jump that never happened.
+  `game_review_history` and `game_profile.series` both carry
+  `family: "steam"` for their whole length, which means their last point is
+  normally SMALLER than the all-family headline. They are not
+  interchangeable, and a difference between them is not a decline.
+- **Neither family is sales.** A review count is not units, owners, copies,
+  or revenue.
+
+## Review-count history and the events around it
+
+`gmc games review-history --source steam <externalId> --json` (MCP:
+`game_review_history`) returns one game's full daily total-review series
+plus the collected market context beside it: `events` (release,
+early-access, demo lifecycle points and clustered official announcements)
+and `discountWindows` (observed major-discount states).
+
+There are no flags. The endpoint takes no query parameters, so the whole
+series comes back every time — window it yourself when the question has a
+range, and say which window you chose. Do not look for a `--range` or
+`--from`/`--to`; narrowing belongs in your reading, not in the request. The
+CLI rejects those flags with a usage error rather than ignoring them, so
+that failure is not transient — drop the flag and window the result.
+
+Use it for "how did this title's reviews accumulate, and what was going on
+around the jumps?" — a timeline question. It answers what was OBSERVED near
+a movement, never what caused it.
+
+Field paths differ by surface: the CLI and REST wrap the payload, so read
+`data.series` / `data.events` / `data.discountWindows`. The MCP tool returns
+the same fields at the top level. The guardrails below name the CLI path;
+drop the `data.` prefix over MCP.
+
+Interpretation guardrails (honesty rules, not suggestions):
+
+- **Scale by date, never by array index.** Collection has real gaps, so two
+  adjacent entries are not two adjacent days. A chart or a rate computed on
+  index positions is wrong.
+- **The series is cleaned, and it can lag.** It is published-run-only and
+  contamination-filtered: an observation more than 2% below the highest
+  earlier one for the same game is withheld as invalid. Differences taken
+  from it are safe to report, but its last point can be OLDER than the
+  game's headline review count until that day's run is published. Date the
+  claim. An empty series means no published daily observation has covered
+  the title yet — not a review count of zero.
+- **Empty event arrays are collection states.** An empty `data.events` or
+  `data.discountWindows` means nothing was COLLECTED for that source. Never
+  report it as "no announcements", "no updates", or "never discounted".
+- **The announcement list is capped.** Official Steam feeds only, most
+  recent 1000 items before clustering, one cluster per UTC day (`count` is
+  the cluster size). For a long-lived game the oldest announcements are
+  absent, so this is not its complete announcement history.
+- **A discount window is a threshold observation, not a sale.** It is an
+  observed state at the >=20% collection threshold. `endDate` is the first
+  observation back below the threshold and is NOT part of the window, and
+  because observations have gaps you cannot infer the actual last discounted
+  day from it. `endDate: null` means no end has been observed yet;
+  `discountPercent` is the opening observation, not the deepest or final
+  depth.
+- **Temporal comparison only.** "Reviews rose in the week after the update"
+  is a claim you can make; "the update caused the rise" is not.
+
+## Per-family collection status
+
+`game_collection_status` (MCP-only, no CLI command) returns per-signal-family
+collection status for one appid: `families[]` always carries all six —
+`metadata`, `reviews`, `research`, `followers`, `social`, `ccu` — each with a
+`state` of `not_collected`, `enrolled`, `current`, `stale`, `unsupported`, or
+`unknown`. Use it for "has GMC actually collected X for this game yet?"
+questions before treating a thin or empty result from another tool as a real
+finding about the title.
+
+Interpretation guardrails (honesty rules, not suggestions):
+
+- **`unknown` is not `not_collected`.** They differ in KIND, not degree.
+  `not_collected` is a positive finding — nothing has been collected for that
+  family. `unknown` means the status itself could not be determined (the read
+  model was unreachable, or a preceding catalogue read failed) and is
+  evidence of neither collection nor non-collection. Never restate an
+  `unknown` family as uncollected.
+- **`available: false` and the `collection_status_unavailable` warning are
+  coupled.** When the whole status could not be determined, every family
+  reports `unknown` and the bare token `collection_status_unavailable`
+  appears in `warnings` if and only if `available` is `false` — branch on
+  either alone.
+- **`requestable` is narrow.** It says only whether the product's
+  detailed-analysis request routes demand to that family TODAY — only
+  `research` is `true`. It is never a statement about any other family's own
+  collection schedule, and requesting analysis never starts collecting a
+  family whose `requestable` is `false`.
+- **Read-only.** Calling this tool never enqueues, enrolls, or prioritizes
+  collection work, no matter how many times it is called — it is a status
+  read, not a collection request.
+- An unknown appid returns `NOT_FOUND`, with the fixed weight-1 credit
+  already charged — resolve the appid with `resolve`/`list_games` first
+  rather than probing.
 
 ## Hard rules
 
