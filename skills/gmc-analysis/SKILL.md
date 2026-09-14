@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.14.0
+  version: 0.15.0
 ---
 
 # GMC Analysis
@@ -474,6 +474,36 @@ Interpretation guardrails (honesty rules, not suggestions):
 - An unknown appid returns `NOT_FOUND`, with the fixed weight-1 credit
   already charged — resolve the appid with `resolve`/`list_games` first
   rather than probing.
+
+## AI disclosure state
+
+Every title carries a tri-state AI-disclosure read from its Steam store page:
+`disclosed`, `absent`, or `unconfirmed`. Filter a cohort with
+`--ai-disclosure <state>` (CLI) or `filter.ai_disclosure` (MCP) on games
+search/count and `market_aggregate`; group with
+`--group-by ai_disclosure` (it cross-tabs with `release_month`); read one
+title's state from `detail.aiDisclosure` (`state`, `observedAt`,
+`rawCategoryValue`).
+
+Interpretation guardrails (honesty rules, not suggestions):
+
+- **`absent` is an observation, not a verdict.** It means a read of the store
+  page found no disclosure block. Steam requires disclosure only in defined
+  cases and disclosure text can be edited away, so `absent` must never be
+  reported as "this title uses no generative AI".
+- **`unconfirmed` is not a finding.** It means not yet successfully observed,
+  and it includes titles nobody has checked. Report it as its own bucket with
+  its count; never fold it into `absent` and never drop it from a share, or
+  the remaining two states become a claim about the whole cohort.
+- **The date matters.** `observedAt` is when the read happened, not the
+  release date, and the state is the latest observed one. A title can disclose
+  today and not have when it shipped.
+- **`aiDisclosure: null` on a detail read** means only that the read model
+  could not be reached; the response also carries `ai_disclosure_unavailable`.
+  Never report it as "not disclosed".
+- `cohort_review_categories` and `compare_as_of` refuse this filter outright
+  (the underlying rollups have no disclosure predicate). Size disclosure
+  cohorts with `market_aggregate` instead.
 
 ## Hard rules
 

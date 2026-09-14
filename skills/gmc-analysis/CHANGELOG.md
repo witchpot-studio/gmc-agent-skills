@@ -1,5 +1,22 @@
 # gmc-analysis skill changelog
 
+## 0.15.0 - 2026-09-14
+
+- New "AI disclosure state" section in SKILL.md (NAK-773): the tri-state
+  Steam store AI-disclosure read, how to filter on it
+  (`--ai-disclosure` / `filter.ai_disclosure`), group by it
+  (`--group-by ai_disclosure`, cross-tabs with `release_month`), and read one
+  title's state from `detail.aiDisclosure`.
+- Adds the interpretation guardrails as honesty rules: `absent` is an
+  observation that no disclosure block was found, never proof a title uses no
+  generative AI; `unconfirmed` means not yet successfully observed (it includes
+  titles never checked) and must be reported as its own bucket rather than
+  folded into `absent`; `observedAt` is the read date, not the release date;
+  `aiDisclosure: null` means the read model was unreachable, not "not
+  disclosed".
+- Records that `cohort_review_categories` and `compare_as_of` refuse the filter
+  outright, so disclosure cohorts are sized with `market_aggregate`.
+
 ## 0.14.0 - 2026-08-20
 
 - New "Query-backed lists (structured plus natural language)" section in
