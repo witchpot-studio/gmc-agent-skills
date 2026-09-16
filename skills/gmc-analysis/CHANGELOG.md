@@ -1,5 +1,30 @@
 # gmc-analysis skill changelog
 
+## 0.16.0 - 2026-09-16
+
+- New "Disclosure text and change history" subsection under "AI disclosure
+  state" (NAK-804): the surface behind the tri-state flag — the developer's
+  disclosure text, the store page it was read from, the first and latest
+  observation dates, and the observed change history. Reached with
+  `gmc games ai-disclosure <appid>` (appid only, no `--source` and no query
+  parameters) or `game_profile` with `ai_disclosure` in `sections` (opt-in, so
+  a call that does not name it performs no extra read, and raw-read weight
+  class, so asking for it beside `detail` leaves the per-appid cost at 1).
+- Adds the interpretation guardrails as honesty rules: `disclosureText` is the
+  developer's own wording, normalized only for whitespace and never classified
+  or scored by Game Market Copilot, so it is quoted and attributed to them
+  rather than paraphrased into a verdict; each event is an OBSERVED change
+  dated as the window between `previousObservedAt` and `observedAt`, never as
+  a moment; an empty `events` array means no change was observed, never that
+  nothing changed, because a title's first observation is a baseline that
+  never appears as an event; `events` can be non-empty while `state` is
+  `unconfirmed`; `unconfirmed` still covers titles never checked, since this
+  surface has no existence check; a `null` payload carries
+  `ai_disclosure_detail_unavailable` and means the read could not be reached,
+  never "not disclosed".
+- MCP-only mapping updated: per-title AI-disclosure text and change history ->
+  `game_profile` with `ai_disclosure` in `sections`.
+
 ## 0.15.0 - 2026-09-14
 
 - New "AI disclosure state" section in SKILL.md (NAK-773): the tri-state

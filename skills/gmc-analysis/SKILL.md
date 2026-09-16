@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.15.0
+  version: 0.16.0
 ---
 
 # GMC Analysis
@@ -57,7 +57,9 @@ applies identically. Mechanics map as follows:
   -> `more_like_this`; review topics by review language (`games
   language-topics`) -> `game_language_topics`; review-count history with
   its lifecycle/announcement/discount context (`games review-history`) ->
-  `game_review_history`.
+  `game_review_history`; per-title AI-disclosure text and change history
+  (`games ai-disclosure`) -> `game_profile` with `ai_disclosure` in
+  `sections`.
 - Per-family collection status ("has GMC actually collected X for this
   game?") has no CLI command yet and is MCP-only: `game_collection_status`
   (see the dedicated section below).
@@ -483,7 +485,8 @@ Every title carries a tri-state AI-disclosure read from its Steam store page:
 search/count and `market_aggregate`; group with
 `--group-by ai_disclosure` (it cross-tabs with `release_month`); read one
 title's state from `detail.aiDisclosure` (`state`, `observedAt`,
-`rawCategoryValue`).
+`rawCategoryValue`). The text and history behind that flag are a separate
+surface — see the subsection below.
 
 Interpretation guardrails (honesty rules, not suggestions):
 
@@ -504,6 +507,42 @@ Interpretation guardrails (honesty rules, not suggestions):
 - `cohort_review_categories` and `compare_as_of` refuse this filter outright
   (the underlying rollups have no disclosure predicate). Size disclosure
   cohorts with `market_aggregate` instead.
+
+### Disclosure text and change history
+
+`gmc games ai-disclosure <appid> --json` (MCP: `game_profile` with
+`ai_disclosure` in `sections`) returns what sits behind that flag: the
+developer's disclosure text, the store page it was read from, the first and
+latest observation dates, and the observed change history. The CLI command
+takes the appid and nothing else — no `--source`, no query parameters. Over
+MCP the section is opt-in, so a call that does not name it performs no extra
+read, and it stays in the raw-read weight class: asking for it beside `detail`
+leaves the per-appid cost at 1.
+
+Interpretation guardrails (honesty rules, not suggestions):
+
+- **The text is the developer's, never ours.** `disclosureText` is their own
+  wording as read from the store page, normalized only for whitespace. Game
+  Market Copilot never classifies it, scores it, or infers from it how much AI
+  was used. Quote it and attribute it to the developer; never paraphrase it
+  into a verdict of your own. It is `null` whenever `state` is not
+  `disclosed`.
+- **Each event is an observed change, so date it as a window.** The store page
+  is read periodically, not continuously, so a change happened SOMEWHERE
+  between `previousObservedAt` and `observedAt`. Say "between those two
+  reads"; never say it happened on either date.
+- **An empty `events` array is not "nothing ever changed".** A title's FIRST
+  observation is a baseline and never appears as an event, so an empty array
+  means only that no change has been observed between two reads. `events` can
+  also be non-empty while `state` is `unconfirmed` — history outlives a later
+  read that failed.
+- **`unconfirmed` still includes never checked.** This surface has no
+  existence check, so an appid never observed comes back `unconfirmed` with no
+  events rather than an error. That is a statement about what has been
+  observed, never about the title.
+- **A `null` payload is unavailability.** It carries
+  `ai_disclosure_detail_unavailable` and means the read could not be reached.
+  Never report it as "not disclosed", and never as not collected.
 
 ## Hard rules
 
