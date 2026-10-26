@@ -17,7 +17,8 @@ Connect the GMC MCP server (or the `gmc` CLI) first — the skill is the
 knowledge layer on top of that connection:
 
 - **MCP (recommended)**: follow https://gamemarketcopilot.com/connect
-  (endpoint: `https://gamemarketcopilot.com/api/mcp/mcp`)
+  (endpoint: `https://gamemarketcopilot.com/mcp`; connections made with
+  the earlier `https://gamemarketcopilot.com/api/mcp/mcp` keep working)
 - **CLI**: `npm install -g @witchpot/gmc`
 
 **A paid GMC plan (Starter or Pro) is required** for API, CLI, and MCP
@@ -61,7 +62,7 @@ The plugin registers the remote MCP server and the skill together.
 Prefer separate pieces? Install just the skill with
 `npx skills add witchpot-studio/gmc-agent-skills --agent codex` (lands in
 `.agents/skills/`, which Codex reads natively), and just the MCP server
-with `codex mcp add gmc --url https://gamemarketcopilot.com/api/mcp/mcp`
+with `codex mcp add gmc --url https://gamemarketcopilot.com/mcp`
 followed by `codex mcp login gmc` — or use
 `--bearer-token-env-var GMC_API_KEY` with an API key from the GMC
 settings instead of OAuth.
