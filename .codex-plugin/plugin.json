@@ -37,7 +37,7 @@
       "Compare roguelike releases by review-count bucket over the last two years",
       "Make a branded chart card of release counts by price band for 2025"
     ],
-    "brandColor": "#EC7336",
+    "brandColor": "#111111",
     "logo": "./assets/logo.svg"
   }
 }
