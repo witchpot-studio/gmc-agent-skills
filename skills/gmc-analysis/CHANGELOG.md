@@ -1,5 +1,27 @@
 # gmc-analysis skill changelog
 
+## 0.17.0 - 2026-10-08
+
+- Review-count history (NAK-934): each `series[]` point can carry the
+  optional `positiveReviews`, the positive-review count observed on the same
+  row, beside the optional `ratingPercent`. Both are absent, never zero, when
+  the row carried no usable value. New guardrail: state a rate as
+  `positiveReviews / totalReviews` when the count is present, because
+  `ratingPercent` is rounded to one decimal (1,999 of 2,000 reads 100.0);
+  without the count, a `100.0` on 2,000 or more reviews is possibly rounded
+  and is never reported as "no negative reviews".
+- New "Steam follower history" section: `gmc games follower-history <appid>`
+  (MCP: `game_follower_history`), its `--range` or `--from`/`--to` window
+  (never both), and the guardrails: observed days only, followers are not
+  wishlists or sales, `not_collected` is a collection state, truncation
+  drops the oldest points.
+- New "Steam event participation" section: `gmc games events <appid>
+  [--include rank_series]` (MCP: `game_steam_events`), with the guardrails:
+  ranks and shelves are observed event-page state, not an official ranking;
+  an absent block or an empty list is a collection state; the rank series is
+  raw and never resampled.
+- MCP-only mapping updated with both tools.
+
 ## 0.16.0 - 2026-09-16
 
 - New "Disclosure text and change history" subsection under "AI disclosure

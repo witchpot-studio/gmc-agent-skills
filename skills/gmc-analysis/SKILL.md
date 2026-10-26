@@ -8,7 +8,7 @@ description: >-
   or campaigns that GMC can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.16.0
+  version: 0.17.0
 ---
 
 # GMC Analysis
@@ -59,7 +59,9 @@ applies identically. Mechanics map as follows:
   its lifecycle/announcement/discount context (`games review-history`) ->
   `game_review_history`; per-title AI-disclosure text and change history
   (`games ai-disclosure`) -> `game_profile` with `ai_disclosure` in
-  `sections`.
+  `sections`; Steam follower history (`games follower-history`) ->
+  `game_follower_history`; Steam event participation (`games events`) ->
+  `game_steam_events` (`include: ["rank_series"]` for the rank series).
 - Per-family collection status ("has GMC actually collected X for this
   game?") has no CLI command yet and is MCP-only: `game_collection_status`
   (see the dedicated section below).
@@ -413,6 +415,13 @@ Field paths differ by surface: the CLI and REST wrap the payload, so read
 the same fields at the top level. The guardrails below name the CLI path;
 drop the `data.` prefix over MCP.
 
+Each `data.series[]` point carries `date` and `totalReviews`, and two
+OPTIONAL fields: `ratingPercent` (the positive-review percentage observed on
+that row, 0-100, rounded to one decimal) and `positiveReviews` (the
+positive-review count observed on that row, 0 to `totalReviews`). Absent
+means the row carried no usable value; neither is ever zero-filled, and a
+returned `0` is a real observation.
+
 Interpretation guardrails (honesty rules, not suggestions):
 
 - **Scale by date, never by array index.** Collection has real gaps, so two
@@ -439,8 +448,66 @@ Interpretation guardrails (honesty rules, not suggestions):
   day from it. `endDate: null` means no end has been observed yet;
   `discountPercent` is the opening observation, not the deepest or final
   depth.
+- **State a rate from the count when it is there.** `ratingPercent` is
+  rounded to one decimal, so 1,999 positive of 2,000 reads `100.0`. When
+  `positiveReviews` is present, compute the rate as
+  `positiveReviews / totalReviews`. When it is absent and `ratingPercent` is
+  `100.0` on `totalReviews` of 2,000 or more, treat the 100 as possibly
+  rounded (anything from 99.95% up): say "about 100% (rounded)", never "no
+  negative reviews". Below 2,000 reviews a `100.0` is exact, because one
+  negative review already reads 99.9 or less.
 - **Temporal comparison only.** "Reviews rose in the week after the update"
   is a claim you can make; "the update caused the rise" is not.
+
+## Steam follower history
+
+`gmc games follower-history <appid> [--range 7d|1m|1y|all] [--from YYYY-MM-DD] [--to YYYY-MM-DD] --json`
+(MCP: `game_follower_history` with `appid` and either `range` or
+`from`/`to`) returns one game's Steam Community group member count on every
+OBSERVED day: `data.series[]` of `date` and `followerCount`, plus
+`data.availability` and `data.seriesMeta`. It takes the appid alone (no
+`--source`). `--range` defaults to `all`, ending today (UTC); `--from` and
+`--to` are inclusive. `--range` cannot be combined with `--from`/`--to`:
+the CLI rejects that as a usage error before any request, so the failure is
+not transient.
+
+Interpretation guardrails:
+
+- **Observed days only.** Days without an observation are absent and never
+  filled or interpolated. Scale by date, never by array index.
+- **Followers are not wishlists.** They are Steam Community game-group
+  members, a public proxy for audience interest. Never report them as a
+  wishlist count and never as sales.
+- **`not_collected` is a collection state.** `data.availability:
+  not_collected` means followers were never collected, never zero followers.
+- **Truncation drops the oldest points.** When `data.seriesMeta.truncated`
+  is true the series still ends at the newest observation; say the early
+  history is cut.
+
+## Steam event participation
+
+`gmc games events <appid> [--include rank_series] --json` (MCP:
+`game_steam_events`, with `include: ["rank_series"]`) returns the
+Steam-run events the game took part in (Next Fest and others), newest
+first: each with its observed best rank, shelf exposure, demo review
+series, store follower series and social account deltas. `--include
+rank_series` adds `rankSeries[]` of `{ snapshotUtc, rank, sourceKey }` per
+event, bounded per event and per response (`rankSeriesTruncated` marks an
+event a cap cut).
+
+Interpretation guardrails:
+
+- **Observed state, not an official ranking.** Ranks and shelf values are
+  event-page state captured by the collector. Report them as observed
+  positions, never as Steam's own ranking.
+- **Absence is a collection state.** An absent block means that signal was
+  not collected for the event. An empty `data.events` means no observed
+  participation, not proof the game never took part.
+- **The rank series is raw.** `rankSeries` holds the observations themselves
+  (about every 30 minutes during a festival), never resampled; a gap is a
+  real collection gap.
+- **Temporal comparison only.** A follower or review change during an event
+  is something you observed beside it, never something the event caused.
 
 ## Per-family collection status
 
