@@ -2,7 +2,7 @@
   "mcpServers": {
     "gmc": {
       "type": "http",
-      "url": "https://gamemarketcopilot.com/api/mcp/mcp"
+      "url": "https://gamemarketcopilot.com/mcp"
     }
   }
 }
