@@ -1,5 +1,29 @@
 # gmc-analysis skill changelog
 
+## 0.18.0 - 2026-10-28
+
+- Access: MCP is included on every plan. Free workspaces get 200 MCP
+  credits a month on their own allowance, separate from Copilot credits;
+  the CLI login and API keys stay paid-only. The old "requires a paid plan"
+  sentence and the PLAN_REQUIRED upgrade advice are replaced by the
+  QUOTA_EXCEEDED reset-date guidance.
+- MCP envelope: credits are no longer in the result body. Read the cost and
+  the remaining credits from `_meta["gamemarketcopilot.com/usage"]`. The
+  note on `meta.quota` and `meta.credits_charged` is removed, and
+  `meta.snapshot` (market_aggregate, list_games) is described.
+- New "MCP working rules" list: the workflow guidance that used to sit in
+  the MCP server instructions (Steam only, not_collected, resolve first,
+  market_aggregate first, external estimates, coverage_check, data date).
+  The server instructions are now short and the skill install step lives in
+  the documentation.
+- Full analysis on every plan over MCP and Copilot, except restricted
+  titles, which return a preview and a `locked` key.
+- Review history over MCP: `range` / `from` / `to`, and the 2026-03-03
+  series start (English-only counts before it are dropped).
+- `list_games` can return followers; `response_format` on `entity_profile`,
+  `more_like_this` and `tag_trends`; `game_profile` `fields`.
+- Prose says Game Market Copilot instead of the short name.
+
 ## 0.17.0 - 2026-10-08
 
 - Review-count history (NAK-934): each `series[]` point can carry the

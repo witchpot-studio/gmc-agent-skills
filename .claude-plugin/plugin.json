@@ -2,7 +2,7 @@
   "name": "game-market-copilot",
   "displayName": "Game Market Copilot",
   "description": "Game Market Copilot: Steam market analytics MCP connection plus the gmc-analysis skill (cohort analysis, market sizing, branded chart cards).",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "author": {
     "name": "Witchpot Inc.",
     "email": "contact@witchpot.com",

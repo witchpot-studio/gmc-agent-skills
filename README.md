@@ -21,9 +21,9 @@ knowledge layer on top of that connection:
   the earlier `https://gamemarketcopilot.com/api/mcp/mcp` keep working)
 - **CLI**: `npm install -g @witchpot/gmc`
 
-**A paid GMC plan (Starter or Pro) is required** for API, CLI, and MCP
-access — Free workspaces cannot connect. See
-https://gamemarketcopilot.com/plans. The skill itself installs fine
+**MCP is included on every plan.** A Free workspace has 200 MCP credits a
+month, counted apart from its Copilot credits. The REST API and the `gmc`
+CLI need a paid plan (Starter or Pro). See https://gamemarketcopilot.com/plans. The skill itself installs fine
 without an account; it just has nothing to talk to until the connection
 exists.
 
