@@ -1,7 +1,7 @@
 {
   "name": "gmc",
   "owner": {
-    "name": "Witchpot Studio",
+    "name": "Witchpot Inc.",
     "url": "https://gamemarketcopilot.com"
   },
   "metadata": {
@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "gmc",
+      "name": "game-market-copilot",
       "source": "./",
       "description": "Game Market Copilot MCP connection + gmc-analysis skill (Steam market analysis workflows and branded chart cards).",
       "category": "data-analysis"
