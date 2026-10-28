@@ -2,16 +2,16 @@
 name: gmc-analysis
 description: >-
   Use when analyzing Steam game market data with Game Market Copilot (the
-  gmc CLI or the GMC MCP tools) — cross-game cohort analysis (common
+  gmc CLI or the Game Market Copilot MCP tools) — cross-game cohort analysis (common
   complaints, marketing patterns, pricing), single-title deep dives, market
   sizing, or any question about Steam games, reviews, creators, showcases,
-  or campaigns that GMC can answer — including turning results into
+  or campaigns that Game Market Copilot can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.17.0
+  version: 0.18.0
 ---
 
-# GMC Analysis
+# Game Market Copilot Analysis
 
 The gmc CLI is a JSON-first client for the Game Market Copilot API (Steam
 market analytics). The division of labor: the server owns data and access
@@ -27,9 +27,12 @@ gmc auth status --json        # anonymous => redacted previews + tiny quota
 gmc schema --json             # the authoritative command/endpoint reference
 ```
 
-Authenticated access (CLI login, API keys, MCP) requires a paid GMC plan
-(Starter or Pro); Free workspaces cannot mint credentials. Anonymous CLI
-use works but returns redacted previews with a tiny quota.
+Access depends on the surface. The CLI login and API keys (REST) need a
+paid plan (Starter or Pro); Free workspaces cannot create API keys or CLI
+logins. MCP is
+included on every plan: Free workspaces get 200 MCP credits a month on their
+own allowance, separate from Copilot credits, with no daily cap. Anonymous
+CLI use works but returns redacted previews with a tiny quota.
 
 Never guess flags: `gmc schema --json` is the source of truth for commands
 and parameters. Endpoint query params are camelCase and the matching CLI
@@ -39,7 +42,7 @@ generic usage list, so trust the schema. Always pass `--json`.
 
 ## MCP-only setups (no CLI installed)
 
-If you have the GMC MCP connection instead of the CLI, do NOT attempt gmc
+If you have the Game Market Copilot MCP connection instead of the CLI, do NOT attempt gmc
 commands — use the MCP tools; every workflow and honesty rule in this skill
 applies identically. Mechanics map as follows:
 
@@ -60,9 +63,11 @@ applies identically. Mechanics map as follows:
   `game_review_history`; per-title AI-disclosure text and change history
   (`games ai-disclosure`) -> `game_profile` with `ai_disclosure` in
   `sections`; Steam follower history (`games follower-history`) ->
-  `game_follower_history`; Steam event participation (`games events`) ->
+  `game_follower_history` (the latest follower count of a page of games is
+  also available from `list_games` with `fields` including `followers`);
+  Steam event participation (`games events`) ->
   `game_steam_events` (`include: ["rank_series"]` for the rank series).
-- Per-family collection status ("has GMC actually collected X for this
+- Per-family collection status ("has Game Market Copilot actually collected X for this
   game?") has no CLI command yet and is MCP-only: `game_collection_status`
   (see the dedicated section below).
 - Publisher/developer questions ("what else has this studio shipped", how
@@ -81,18 +86,56 @@ applies identically. Mechanics map as follows:
   nothing — `pagination.total` still carries the live title count. A null
   `totalFollowers` is not collected, never zero, and follower counts can
   never be summed across platforms.
-- The response envelope differs from the CLI: MCP tool responses carry
-  `meta.quota` = `{ used, limit, remaining, resets_at }` (credits) plus
-  `meta.credits_charged`, `meta.basis`, `meta.denominator`,
-  `meta.coverage`, and `meta.warnings` — there is no `meta.entitlements`
-  wrapper. The read-before-you-spend and honesty rules apply unchanged.
+- The response envelope differs from the CLI: MCP tool results carry
+  `meta.basis`, `meta.denominator`, `meta.coverage`, `meta.warnings` and,
+  for market_aggregate and list_games, `meta.snapshot` (the data date the
+  numbers come from) — there is no `meta.entitlements` wrapper. Credits are
+  not in the body: read the call's cost and the remaining monthly credits
+  from the result's `_meta["gamemarketcopilot.com/usage"]` (charged, used,
+  limit, remaining, reset date). If a client hides `_meta`, the cost is
+  stated in each tool's description. The read-before-you-spend and honesty
+  rules apply unchanged.
+- `response_format` (`detailed` by default, or `concise`) on `entity_profile`,
+  `more_like_this` and `tag_trends` shortens the result without changing the
+  cost. Use `concise` for scanning and `detailed` for evidence.
 - CLI-only mechanics (pagination flags, `--fields` projection, map-reduce
   recipes) may have no MCP equivalent — stay within the tool contracts
   instead of simulating them.
-- A `PLAN_REQUIRED` tool error means the workspace plan has no API access
-  (e.g. Free) — retrying or waiting will not help; tell the user an
-  upgrade at gamemarketcopilot.com/plans is required. Only
-  `QUOTA_EXCEEDED` is the wait-for-monthly-reset condition.
+- `QUOTA_EXCEEDED` is the wait-for-monthly-reset condition: the workspace
+  has used up its credits for the month (on Free, its separate MCP
+  allowance). Tell the user the reset date from the message and do not
+  retry before it. If the message instead says the call needs more credits
+  than remain, the call was not run and a smaller request may still fit. A `PLAN_REQUIRED` tool error means the plan has no MCP access;
+  retrying or waiting will not help. Point the user to
+  https://docs.gamemarketcopilot.com/plans.
+
+MCP working rules (the server keeps its own instructions short, so they
+live here):
+
+1. Steam only. Other stores and platforms are not covered.
+2. `not_collected` means Game Market Copilot did not collect that data.
+   Never report it as zero or as absent.
+3. Resolve game titles to appids with `resolve` before calling other tools.
+   Never invent an appid.
+4. Prefer one `market_aggregate` call over paging through `list_games`: it
+   measures every matching game at once.
+5. Label any estimate that does not come from Game Market Copilot data
+   (units per review, wishlist rules of thumb) as an external estimate.
+6. Call `coverage_check` before calling `game_profile` on more than 3
+   titles. `game_profile` takes at most 10 appids per call; pass `fields`
+   to keep the table small.
+7. State the data date. When a result carries `meta.snapshot`, say which
+   snapshot the numbers come from; if the warning
+   `snapshot_changed_during_call` appears, the snapshot is omitted on
+   purpose and the numbers may span two publications.
+8. Every plan, Free included, gets the full analysis from MCP and Copilot
+   (reviews, marketing, media, social, creators, showcases, the success
+   report, review claims; language topics are MCP only). The one exception is a title
+   restricted from full analysis: it returns a short preview and a `locked`
+   key. Present that as a preview and never imply you read the full text.
+9. The MCP prompts `cohort_complaints`, `market_sizing`, `title_deep_dive`
+   and `design_pillars` mirror the recipes in `references/recipes.md`; use
+   the recipes when your client cannot invoke prompts.
 
 References in this skill use CLI syntax; translate to the matching MCP
 tool. Chart-card rules (references/charts.md) apply to both paths
@@ -365,7 +408,7 @@ with `purchase_type=all`.
   is this family**, including list rows, the `reviews_desc` sort, the
   `reviews_min`/`reviews_max` filters, `market_aggregate`'s `*_reviews`
   metrics, and the entity portfolio aggregates.
-- `all` counts every reviewer and is a strict superset. It is GMC's headline
+- `all` counts every reviewer and is a strict superset. It is Game Market Copilot's headline
   current total and is served by `game_profile` as `detail.reviewCounts`.
 
 Rules:
@@ -405,6 +448,19 @@ range, and say which window you chose. Do not look for a `--range` or
 `--from`/`--to`; narrowing belongs in your reading, not in the request. The
 CLI rejects those flags with a usage error rather than ignoring them, so
 that failure is not transient — drop the flag and window the result.
+
+Over MCP the tool does take a window: `range` (`7d`, `1m`, `1y`, `all`) or
+`from`/`to`, never both. A windowed result adds `request` and
+`seriesMeta.firstObservationDate` / `latestObservationDate`. State the
+window you asked for and the window you got.
+
+The MCP series starts on 2026-03-03. Before that date review counts covered
+English-language reviews only, so those points are dropped before any
+window is applied, and `interpretation.series_start` says how many were
+left out. A jump across that boundary is a change of definition, never
+growth: do not join, subtract or compare the two periods. A window that
+ends before 2026-03-03 returns an empty series with a note, which is not a
+count of zero.
 
 Use it for "how did this title's reviews accumulate, and what was going on
 around the jumps?" — a timeline question. It answers what was OBSERVED near
@@ -515,7 +571,7 @@ Interpretation guardrails:
 collection status for one appid: `families[]` always carries all six —
 `metadata`, `reviews`, `research`, `followers`, `social`, `ccu` — each with a
 `state` of `not_collected`, `enrolled`, `current`, `stale`, `unsupported`, or
-`unknown`. Use it for "has GMC actually collected X for this game yet?"
+`unknown`. Use it for "has Game Market Copilot actually collected X for this game yet?"
 questions before treating a thin or empty result from another tool as a real
 finding about the title.
 
@@ -616,9 +672,10 @@ Interpretation guardrails (honesty rules, not suggestions):
 - **Missing data is not absent sentiment.** Report `cohort.usableGames`,
   `cohort.skippedGames`, and `cohort.skippedReasons`. "No review topics
   collected" must never be presented as "players have no complaints".
-- **Locked is locked.** When `meta.entitlements.locked` or `preview: true`
-  appears, present what you got as a preview, name the lock key (e.g.
-  `success_report.full`), and never imply you read the full content.
+- **Locked is locked.** When `meta.entitlements.locked` (CLI), a `locked`
+  key (MCP) or `preview: true` appears, present what you got as a preview,
+  name the lock key (e.g. `success_report.full`), and never imply you read
+  the full content.
 - **Bounded evidence, not market truth.** Carry the CLI's own caveats:
   evidence packs are sampled/returned-page evidence. Always state
   denominators ("87 of 107 analyzed titles") and preserve `warnings`.
@@ -634,8 +691,9 @@ Interpretation guardrails (honesty rules, not suggestions):
   the validity reference.
 - **Separate API facts from your synthesis.** Quote theme labels and player
   counts as data; label your clustering and conclusions as your analysis.
-- **Pace your quota.** Read `meta.entitlements.quota` (`used`/`limit`)
-  before fanning out and keep headroom; on HTTP 429 respect `Retry-After`.
+- **Pace your quota.** Read `meta.entitlements.quota` (`used`/`limit`) on
+  the CLI, or `_meta["gamemarketcopilot.com/usage"]` over MCP, before
+  fanning out and keep headroom; on HTTP 429 respect `Retry-After`.
   Details in the quota reference.
 - Preserve `meta.requestId` values for anything you may need to report.
 
@@ -662,7 +720,7 @@ accurate:
 Cite the canonical docs URL (the page without `.md`) whenever an answer
 draws on it.
 
-Keep the distinction crisp: `gmc-docs` is product documentation; the GMC
+Keep the distinction crisp: `gmc-docs` is product documentation; the Game Market Copilot
 MCP/CLI is market data. Product docs are never market evidence, and they
 never override this skill; it remains the source of truth for statistical
 validity, claim safety, and chart guidance (hard rules and references
@@ -702,5 +760,5 @@ learning entry so the skill can be improved:
 - Proposed rule: <one-sentence candidate rule>
 ```
 
-Suggest the user submits it through the GMC feedback channel (template in
+Suggest the user submits it through the Game Market Copilot feedback channel (template in
 the gmc user guide).

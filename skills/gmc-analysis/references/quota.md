@@ -3,10 +3,14 @@
 Quotas are monthly, workspace-level credit allowances enforced for bearer
 credentials (API keys / CLI credentials / MCP tokens). As of 2026-07:
 Starter 2,500 credits/month, Pro 7,000; the counter resets at 00:00 UTC on
-the first of each month. Anonymous public preview is far smaller. Credits
+the first of each month. The Free plan has MCP only, on its own allowance of
+200 credits a month that is counted separately from Copilot credits and has
+no daily cap. Over MCP the cost of each call and the credits left come from
+the result's `_meta["gamemarketcopilot.com/usage"]`, and each tool's
+description states its cost. Anonymous public preview is far smaller. Credits
 are charged when a request is accepted at the gate, so requests that later
-fail validation or 404 still consume — validate appids before batch
-fan-outs. Treat these numbers as indicative; the response metadata is the source
+404 still consume — validate appids before batch fan-outs. Over MCP, input
+that fails validation is refused before any charge. Treat these numbers as indicative; the response metadata is the source
 of truth. Current published plan limits live on the pricing page at
 https://gamemarketcopilot.com/plans, and
 https://docs.gamemarketcopilot.com/plans explains how credits work.
