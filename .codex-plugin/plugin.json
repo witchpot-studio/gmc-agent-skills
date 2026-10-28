@@ -1,9 +1,9 @@
 {
-  "name": "gmc",
+  "name": "game-market-copilot",
   "version": "0.17.0",
   "description": "Steam market analytics from Game Market Copilot: MCP tools plus the gmc-analysis skill for cohort analysis, market sizing, and branded chart cards.",
   "author": {
-    "name": "Witchpot Studio",
+    "name": "Witchpot Inc.",
     "email": "contact@witchpot.com",
     "url": "https://gamemarketcopilot.com"
   },
@@ -24,7 +24,7 @@
     "displayName": "Game Market Copilot",
     "shortDescription": "Steam market analytics: observed data, cohort analysis, chart cards",
     "longDescription": "Query Game Market Copilot's Steam market database from Codex: size cohorts with population-true aggregates, check research coverage before fan-outs, pull per-title profiles and review evidence, and turn results into publish-ready branded chart cards. Data is observed on a regular collection schedule, not estimated. Requires a paid GMC plan (Starter or Pro).",
-    "developerName": "Witchpot Studio",
+    "developerName": "Witchpot Inc.",
     "category": "Productivity",
     "capabilities": [
       "Read"

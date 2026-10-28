@@ -5,7 +5,7 @@
   },
   "plugins": [
     {
-      "name": "gmc",
+      "name": "game-market-copilot",
       "source": {
         "source": "url",
         "url": "https://github.com/witchpot-studio/gmc-agent-skills.git"

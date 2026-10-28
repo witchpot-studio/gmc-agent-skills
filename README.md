@@ -42,7 +42,7 @@ agent skill directories (e.g. `.claude/skills/`, `.agents/skills/`).
 
 ```
 /plugin marketplace add witchpot-studio/gmc-agent-skills
-/plugin install gmc@gmc
+/plugin install game-market-copilot@gmc
 ```
 
 The plugin bundles the remote MCP server configuration and the skill
@@ -53,11 +53,21 @@ together. On first use, authenticate with your GMC account when prompted
 
 ```bash
 codex plugin marketplace add witchpot-studio/gmc-agent-skills
-codex plugin add gmc@gmc
+codex plugin add game-market-copilot@gmc
 codex mcp login gmc     # OAuth sign-in with your GMC account
 ```
 
 The plugin registers the remote MCP server and the skill together.
+
+### Upgrading from the `gmc` plugin
+
+Earlier versions named the plugin `gmc`, so an install made with
+`gmc@gmc` no longer receives updates. Remove it and install the renamed
+plugin: `/plugin uninstall gmc@gmc` then
+`/plugin install game-market-copilot@gmc` in Claude Code, or
+`codex plugin remove gmc@gmc` then
+`codex plugin add game-market-copilot@gmc` in Codex. Your agent may ask
+you to sign in to GMC again after the switch.
 
 Prefer separate pieces? Install just the skill with
 `npx skills add witchpot-studio/gmc-agent-skills --agent codex` (lands in
@@ -89,6 +99,26 @@ support. The chart-card reference bundled in the skill produces compliant
 charts by construction. Republishing terms: see the GMC Terms of Use
 (press/analyst republishing section).
 
+## What the plugin connects to
+
+The plugin contains no executable code. It adds two things to your agent:
+
+- **One remote MCP server**, `gmc`, at `https://gamemarketcopilot.com/mcp`
+  (`.mcp.json`). Your agent sends the MCP requests you make (tool calls and
+  their arguments) to that server, signed in with your GMC account through
+  OAuth, or with a GMC API key if you configure one. Tool calls use the
+  monthly credits of your plan. The plugin sends nothing anywhere else.
+- **The `gmc-analysis` skill**: Markdown instructions that your agent reads
+  locally.
+
+## Privacy
+
+Game Market Copilot is operated by Witchpot Inc. How GMC handles account
+and request data is described in the
+[Privacy Policy](https://gamemarketcopilot.com/legal/privacy). Use of the
+service is covered by the
+[Terms of Use](https://gamemarketcopilot.com/legal/terms).
+
 ## Repository layout
 
 This repo is a distribution mirror. The canonical skill source lives in
@@ -96,6 +126,12 @@ the GMC product repo (`packages/gmc-cli/skill/gmc-analysis/`) and ships
 identically inside the `@witchpot/gmc` npm package. Do not edit `skills/`
 here directly — changes are synced with `scripts/sync-from-cli.mjs` and
 drift fails the release check.
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE). See
+[NOTICE](NOTICE): the license grants no permission to use the Game Market
+Copilot name or logo.
 
 ## Support
 
