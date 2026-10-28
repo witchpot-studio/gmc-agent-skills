@@ -28,7 +28,8 @@ gmc schema --json             # the authoritative command/endpoint reference
 ```
 
 Access depends on the surface. The CLI login and API keys (REST) need a
-paid plan (Starter or Pro); Free workspaces cannot mint credentials. MCP is
+paid plan (Starter or Pro); Free workspaces cannot create API keys or CLI
+logins. MCP is
 included on every plan: Free workspaces get 200 MCP credits a month on their
 own allowance, separate from Copilot credits, with no daily cap. Anonymous
 CLI use works but returns redacted previews with a tiny quota.
@@ -101,10 +102,10 @@ applies identically. Mechanics map as follows:
   recipes) may have no MCP equivalent — stay within the tool contracts
   instead of simulating them.
 - `QUOTA_EXCEEDED` is the wait-for-monthly-reset condition: the workspace
-  has used its credits for the month (on Free, its separate MCP allowance),
-  or the call costs more than what is left. A smaller request may still
-  fit; tell the user the reset date from the message and do not retry
-  before it. A `PLAN_REQUIRED` tool error means the plan has no MCP access;
+  has used up its credits for the month (on Free, its separate MCP
+  allowance). Tell the user the reset date from the message and do not
+  retry before it. If the message instead says the call needs more credits
+  than remain, the call was not run and a smaller request may still fit. A `PLAN_REQUIRED` tool error means the plan has no MCP access;
   retrying or waiting will not help. Point the user to
   https://docs.gamemarketcopilot.com/plans.
 
@@ -129,7 +130,7 @@ live here):
    purpose and the numbers may span two publications.
 8. Every plan, Free included, gets the full analysis from MCP and Copilot
    (reviews, marketing, media, social, creators, showcases, the success
-   report, review claims and language topics). The one exception is a title
+   report, review claims; language topics are MCP only). The one exception is a title
    restricted from full analysis: it returns a short preview and a `locked`
    key. Present that as a preview and never imply you read the full text.
 9. The MCP prompts `cohort_complaints`, `market_sizing`, `title_deep_dive`
