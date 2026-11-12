@@ -73,9 +73,7 @@ Prefer separate pieces? Install just the skill with
 `npx skills add witchpot-studio/gmc-agent-skills --agent codex` (lands in
 `.agents/skills/`, which Codex reads natively), and just the MCP server
 with `codex mcp add gmc --url https://gamemarketcopilot.com/mcp`
-followed by `codex mcp login gmc` — or use
-`--bearer-token-env-var GMC_API_KEY` with an API key from the GMC
-settings instead of OAuth.
+followed by `codex mcp login gmc`.
 
 ### Manual
 
