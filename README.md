@@ -101,15 +101,38 @@ charts by construction. Republishing terms: see the GMC Terms of Use
 
 ## What the plugin connects to
 
-The plugin contains no executable code. It adds two things to your agent:
+Nothing in the plugin runs on its own: it has no hooks, commands, or local
+servers. (`scripts/sync-from-cli.mjs` maintains this repository and is never
+run by the plugin.) It adds two things to your agent:
 
 - **One remote MCP server**, `gmc`, at `https://gamemarketcopilot.com/mcp`
   (`.mcp.json`). Your agent sends the MCP requests you make (tool calls and
   their arguments) to that server, signed in with your GMC account through
   OAuth, or with a GMC API key if you configure one. Tool calls use the
-  monthly credits of your plan. The plugin sends nothing anywhere else.
+  monthly credits of your plan.
 - **The `gmc-analysis` skill**: Markdown instructions that your agent reads
   locally.
+
+The skill can point your agent to these other places, and only these:
+
+- **The `gmc` CLI**, if you installed it separately. It calls the same Game
+  Market Copilot API at `https://gamemarketcopilot.com` with your CLI
+  sign-in.
+- **The public documentation** at
+  [docs.gamemarketcopilot.com](https://docs.gamemarketcopilot.com),
+  including its read-only Docs MCP at `https://docs.gamemarketcopilot.com/mcp`,
+  for questions about plans, credits, and setup. It needs no sign-in, and
+  your agent sends only the page it reads or the text it searches for.
+- **Chart cards**, only when you ask for a chart. Your agent writes an HTML
+  file on your machine. Opening it in a browser loads fonts from Google Fonts
+  (`fonts.googleapis.com`), Chart.js from jsDelivr (`cdn.jsdelivr.net`),
+  game cover images from Steam's image server
+  (`shared.akamai.steamstatic.com`), and the Game Market Copilot logo from
+  `gamemarketcopilot.com`. To turn a card into an image, the skill gives
+  `npx playwright screenshot` as one example, which runs only if you or your
+  agent choose it.
+
+The plugin sends nothing anywhere else.
 
 ## Privacy
 
