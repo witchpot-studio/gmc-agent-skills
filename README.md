@@ -46,8 +46,7 @@ agent skill directories (e.g. `.claude/skills/`, `.agents/skills/`).
 ```
 
 The plugin bundles the remote MCP server configuration and the skill
-together. On first use, authenticate with your GMC account when prompted
-(or configure your API key per the connect page).
+together. On first use, sign in with your GMC account when prompted.
 
 ### OpenAI Codex plugin (MCP connection + skill in one step)
 
@@ -99,15 +98,13 @@ charts by construction. Republishing terms: see the GMC Terms of Use
 
 ## What the plugin connects to
 
-Nothing in the plugin runs on its own: it has no hooks, commands, or local
-servers. (`scripts/sync-from-cli.mjs` maintains this repository and is never
-run by the plugin.) It adds two things to your agent:
+Nothing in the plugin runs on its own: it has no hooks, commands, scripts,
+or local servers. It adds two things to your agent:
 
 - **One remote MCP server**, `gmc`, at `https://gamemarketcopilot.com/mcp`
   (`.mcp.json`). Your agent sends the MCP requests you make (tool calls and
   their arguments) to that server, signed in with your GMC account through
-  OAuth, or with a GMC API key if you configure one. Tool calls use the
-  monthly credits of your plan.
+  OAuth. Tool calls use the monthly credits of your plan.
 - **The `gmc-analysis` skill**: Markdown instructions that your agent reads
   locally.
 
@@ -145,8 +142,9 @@ service is covered by the
 This repo is a distribution mirror. The canonical skill source lives in
 the GMC product repo (`packages/gmc-cli/skill/gmc-analysis/`) and ships
 identically inside the `@witchpot/gmc` npm package. Do not edit `skills/`
-here directly — changes are synced with `scripts/sync-from-cli.mjs` and
-drift fails the release check.
+here directly — changes are synced from the GMC repo with
+`npm run skill:sync` (in `packages/gmc-cli`), and drift fails the release
+check there.
 
 ## License
 

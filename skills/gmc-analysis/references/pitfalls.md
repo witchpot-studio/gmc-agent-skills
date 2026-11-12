@@ -36,8 +36,8 @@ that unlocks it if the user asks. Never extrapolate locked content.
 
 ## P4. Anonymous sessions look broken but are just unauthenticated
 
-Without `gmc login` / `GMC_API_KEY`, deep sections come back redacted and
-the quota is tiny, which can read as "the API has no data".
+When the CLI is not signed in (no `gmc login`), deep sections come back
+redacted and the quota is tiny, which can read as "the API has no data".
 
 **Rule**: run `gmc auth status --json` first; if `authMode` is `anonymous`,
 say so in your answer and scope expectations to public preview data.
