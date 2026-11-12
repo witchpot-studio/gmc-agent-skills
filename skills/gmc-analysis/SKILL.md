@@ -8,7 +8,7 @@ description: >-
   or campaigns that Game Market Copilot can answer — including turning results into
   publish-ready branded chart cards.
 metadata:
-  version: 0.18.0
+  version: 0.18.1
 ---
 
 # Game Market Copilot Analysis

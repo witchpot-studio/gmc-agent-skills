@@ -1,5 +1,10 @@
 # gmc-analysis skill changelog
 
+## 0.18.1 - 2026-11-12
+
+- Pitfalls P4 no longer names a credential environment variable. It says
+  the CLI is not signed in; `gmc auth status --json` remains the check.
+
 ## 0.18.0 - 2026-10-28
 
 - Access: MCP is included on every plan. Free workspaces get 200 MCP

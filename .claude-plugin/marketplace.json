@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Official Game Market Copilot plugins: remote MCP connection bundled with the gmc-analysis skill.",
-    "version": "0.18.0"
+    "version": "0.18.1"
   },
   "plugins": [
     {
